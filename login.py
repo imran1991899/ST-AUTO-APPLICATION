@@ -16,22 +16,22 @@ def login_oas():
         print("Navigating to OAS login page...")
         page.goto("https://oas.st.gov.my/en/home", timeout=60000)
 
-        # 1. Fill credentials and click sign in
+        # Fill credentials
         page.fill("input[type='text'], input[name*='login'], input[id*='login']", email)
         page.fill("input[type='password'], input[name*='password'], input[id*='password']", password)
         
         print("Submitting login form...")
-        page.click("button[type='submit'], input[type='submit'], button:has-text('Sign In'), button:has-text('Log Masuk')")
+        # Use force=True to bypass overlapping warning/info boxes
+        submit_button = page.locator("input[type='submit'], button[type='submit']")
+        submit_button.click(force=True)
         
-        # 2. Wait for page load after submit
+        # Wait for page load after submit
         page.wait_for_load_state("networkidle")
 
-        # --- VERIFICATION STEP 1: Check Current URL ---
+        # --- VERIFICATION ---
         current_url = page.url
         print(f"Current page URL after submission: {current_url}")
 
-        # --- VERIFICATION STEP 2: Check for Post-Login UI Elements ---
-        # Checks if 'Logout', 'Sign Out', or dashboard indicators exist
         logged_in_indicator = page.locator("a:has-text('Logout'), a:has-text('Log Keluar'), .user-avatar, .dashboard")
         
         if logged_in_indicator.count() > 0 or "home" not in current_url:
@@ -39,7 +39,6 @@ def login_oas():
         else:
             print("VERIFICATION WARNING: Could not explicitly confirm login element, please check screenshot.")
 
-        # --- VERIFICATION STEP 3: Take Screenshot ---
         page.screenshot(path="login_result.png", full_page=True)
         print("Saved result screenshot to login_result.png")
 
