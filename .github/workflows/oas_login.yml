@@ -1,0 +1,37 @@
+name: OAS Auto Login
+
+on:
+  workflow_dispatch:
+
+jobs:
+  login:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install chromium
+
+      - name: Run Login Script
+        env:
+          OAS_EMAIL: ${{ secrets.OAS_EMAIL }}
+          OAS_PASSWORD: ${{ secrets.OAS_PASSWORD }}
+        run: |
+          python login.py
+
+      - name: Save Verification Screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oas-login-screenshot
+          path: login_result.png
