@@ -16,17 +16,19 @@ def login_oas():
         print("Navigating to OAS login page...")
         page.goto("https://oas.st.gov.my/en/home", timeout=60000)
 
-        # 1. Time buffer for the popup message to fully load
+        # 1. Add time buffer for the popup message to fully load
         print("Waiting for popup to appear...")
-        page.wait_for_timeout(3000)
+        page.wait_for_timeout(3000) # Waits for 3 seconds
 
         # 2. Click the 'X' close button on the popup
         try:
             print("Attempting to close popup...")
+            # Target the close button shown in your screenshot
             close_btn = page.locator("button.close, .close, [aria-label='Close'], button:has-text('x'), .ui-dialog-titlebar-close, .aui-button-icon-close")
             if close_btn.is_visible(timeout=3000):
                 close_btn.first.click()
                 print("Popup closed successfully.")
+                # Brief buffer after closing to let the overlay disappear
                 page.wait_for_timeout(1000)
         except Exception as e:
             print(f"No popup found or already closed: {e}")
@@ -53,7 +55,10 @@ def login_oas():
         if logged_in_indicator.count() > 0 or "home" not in current_url:
             print("VERIFICATION SUCCESSFUL: Login was completed successfully!")
         else:
-            print("VERIFICATION WARNING: Could not explicitly confirm login element.")
+            print("VERIFICATION WARNING: Could not explicitly confirm login element, please check screenshot.")
+
+        page.screenshot(path="login_result.png", full_page=True)
+        print("Saved result screenshot to login_result.png")
 
         browser.close()
 
