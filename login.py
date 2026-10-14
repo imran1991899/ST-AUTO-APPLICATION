@@ -16,16 +16,28 @@ def login_oas():
         print("Navigating to OAS login page...")
         page.goto("https://oas.st.gov.my/en/home", timeout=60000)
 
-        # Fill credentials
-        page.fill("input[type='text'], input[name*='login'], input[id*='login']", email)
-        page.fill("input[type='password'], input[name*='password'], input[id*='password']", password)
+        # 1. Close the popup announcement dialog if it appears
+        try:
+            print("Checking for popup announcement...")
+            # Look for the close button indicated by the red circle in the screenshot
+            close_btn = page.locator("button.close, .close, [aria-label='Close'], button:has-text('x'), .ui-dialog-titlebar-close")
+            if close_btn.is_visible(timeout=5000):
+                close_btn.first.click()
+                print("Popup closed successfully.")
+        except Exception as e:
+            print(f"No popup found or already closed: {e}")
+
+        # 2. Fill Email Address and Password fields using the form labels
+        print("Filling credentials...")
+        page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
+        page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
+        # 3. Click the Sign In button
         print("Submitting login form...")
-        # Use force=True to bypass overlapping warning/info boxes
         submit_button = page.locator("input[type='submit'], button[type='submit']")
         submit_button.click(force=True)
         
-        # Wait for page load after submit
+        # 4. Wait for page load after submit
         page.wait_for_load_state("networkidle")
 
         # --- VERIFICATION ---
