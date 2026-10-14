@@ -16,28 +16,32 @@ def login_oas():
         print("Navigating to OAS login page...")
         page.goto("https://oas.st.gov.my/en/home", timeout=60000)
 
-        # 1. Close the popup announcement dialog if it appears
+        # 1. Time buffer for the popup message to fully load
+        print("Waiting for popup to appear...")
+        page.wait_for_timeout(3000)
+
+        # 2. Click the 'X' close button on the popup
         try:
-            print("Checking for popup announcement...")
-            # Look for the close button indicated by the red circle in the screenshot
-            close_btn = page.locator("button.close, .close, [aria-label='Close'], button:has-text('x'), .ui-dialog-titlebar-close")
-            if close_btn.is_visible(timeout=5000):
+            print("Attempting to close popup...")
+            close_btn = page.locator("button.close, .close, [aria-label='Close'], button:has-text('x'), .ui-dialog-titlebar-close, .aui-button-icon-close")
+            if close_btn.is_visible(timeout=3000):
                 close_btn.first.click()
                 print("Popup closed successfully.")
+                page.wait_for_timeout(1000)
         except Exception as e:
             print(f"No popup found or already closed: {e}")
 
-        # 2. Fill Email Address and Password fields using the form labels
+        # 3. Fill Email Address and Password fields
         print("Filling credentials...")
         page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
         page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
-        # 3. Click the Sign In button
+        # 4. Click the Sign In button
         print("Submitting login form...")
         submit_button = page.locator("input[type='submit'], button[type='submit']")
         submit_button.click(force=True)
         
-        # 4. Wait for page load after submit
+        # 5. Wait for page load after submit
         page.wait_for_load_state("networkidle")
 
         # --- VERIFICATION ---
@@ -49,10 +53,7 @@ def login_oas():
         if logged_in_indicator.count() > 0 or "home" not in current_url:
             print("VERIFICATION SUCCESSFUL: Login was completed successfully!")
         else:
-            print("VERIFICATION WARNING: Could not explicitly confirm login element, please check screenshot.")
-
-        page.screenshot(path="login_result.png", full_page=True)
-        print("Saved result screenshot to login_result.png")
+            print("VERIFICATION WARNING: Could not explicitly confirm login element.")
 
         browser.close()
 
