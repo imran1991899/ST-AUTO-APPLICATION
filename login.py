@@ -4,17 +4,11 @@ from PIL import Image, ImageOps
 from playwright.sync_api import sync_playwright
 
 def solve_captcha_image(image_path):
-    """Simple OCR processor to read the CAPTCHA text."""
     try:
-        img = Image.open(image_path).convert('L') # Convert to grayscale
-        # Increase contrast to make numbers pop against the background
+        img = Image.open(image_path).convert('L')
         img = ImageOps.autocontrast(img, cutoff=2)
-        
-        # Run tesseract OCR specifically looking for numbers/eng characters
         config = '--oem 1 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
         text = pytesseract.image_to_string(img, config=config)
-        
-        # Clean up any whitespace or hidden newlines
         clean_text = text.strip().replace(" ", "").replace("\n", "")
         print(f"OCR Extracted CAPTCHA Text: '{clean_text}'")
         return clean_text
@@ -37,7 +31,7 @@ def login_oas():
         print("Navigating to OAS login page...")
         page.goto("https://oas.st.gov.my/en/home", timeout=60000)
 
-        # 1. Time buffer for the popup message to fully load
+        # 1. Time buffer for the popup message
         print("Waiting for popup to appear...")
         page.wait_for_timeout(3000)
 
@@ -57,24 +51,26 @@ def login_oas():
         page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
         page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
-        # 4. Locate, capture, and extract the CAPTCHA
+        # 4. Locate, capture, and extract the CAPTCHA using a broad selector for images near password/verification
         captcha_code = ""
         try:
             print("Capturing CAPTCHA element...")
-            captcha_img = page.locator("img[src*='captcha'], img[id*='captcha'], .captcha img")
+            # Look for any image near the password or text verification field
+            captcha_img = page.locator("input[name*='captcha'] ~ img, tr:has-text('Text Verification') img, img[src*='captcha'], img[id*='captcha'], table img").first
             if captcha_img.count() > 0:
-                captcha_img.first.screenshot(path="captcha.png")
-                # Automatically read the text using OCR function
+                captcha_img.screenshot(path="captcha.png")
+                print("Saved captcha.png successfully.")
                 captcha_code = solve_captcha_image("captcha.png")
             else:
-                print("CAPTCHA image locator not found.")
+                print("Specific captcha image selector failed, taking page snippet...")
+                page.screenshot(path="captcha.png")
         except Exception as e:
             print(f"Error handling CAPTCHA image: {e}")
 
         # 5. Fill Text Verification box
         if captcha_code:
             print(f"Filling Text Verification box with: {captcha_code}")
-            page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification']").fill(captcha_code)
+            page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification'], tr:has-text('Text Verification') input").fill(captcha_code)
         else:
             print("Warning: No CAPTCHA code was extracted.")
 
@@ -83,7 +79,6 @@ def login_oas():
         submit_button = page.locator("input[type='submit'], button[type='submit']")
         submit_button.click(force=True)
         
-        # 7. Wait for page load after submit
         page.wait_for_load_state("networkidle")
 
         # --- VERIFICATION ---
