@@ -1,5 +1,26 @@
 import os
+import pytesseract
+from PIL import Image, ImageOps
 from playwright.sync_api import sync_playwright
+
+def solve_captcha_image(image_path):
+    """Simple OCR processor to read the CAPTCHA text."""
+    try:
+        img = Image.open(image_path).convert('L') # Convert to grayscale
+        # Increase contrast to make numbers pop against the background
+        img = ImageOps.autocontrast(img, cutoff=2)
+        
+        # Run tesseract OCR specifically looking for numbers/eng characters
+        config = '--oem 1 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+        text = pytesseract.image_to_string(img, config=config)
+        
+        # Clean up any whitespace or hidden newlines
+        clean_text = text.strip().replace(" ", "").replace("\n", "")
+        print(f"OCR Extracted CAPTCHA Text: '{clean_text}'")
+        return clean_text
+    except Exception as e:
+        print(f"OCR Processing failed: {e}")
+        return ""
 
 def login_oas():
     email = os.environ.get("OAS_EMAIL")
@@ -36,34 +57,46 @@ def login_oas():
         page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
         page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
-        # 4. Locate and screenshot the CAPTCHA image
+        # 4. Locate, capture, and extract the CAPTCHA
+        captcha_code = ""
         try:
-            print("Capturing CAPTCHA image...")
-            # Look for the CAPTCHA image element on the form
+            print("Capturing CAPTCHA element...")
             captcha_img = page.locator("img[src*='captcha'], img[id*='captcha'], .captcha img")
             if captcha_img.count() > 0:
                 captcha_img.first.screenshot(path="captcha.png")
-                print("Saved captcha.png successfully.")
+                # Automatically read the text using OCR function
+                captcha_code = solve_captcha_image("captcha.png")
             else:
-                # Fallback: take a screenshot of the login form area
-                page.screenshot(path="captcha.png")
-                print("CAPTCHA specific tag not found, saved general view to captcha.png")
+                print("CAPTCHA image locator not found.")
         except Exception as e:
-            print(f"Could not save CAPTCHA image: {e}")
+            print(f"Error handling CAPTCHA image: {e}")
 
-        # 5. Fill Text Verification box (If you have a static value or a way to supply it)
-        # Note: If running locally, you can prompt input(). In GitHub Actions, it requires an automated solver or static bypass.
-        captcha_text = os.environ.get("CAPTCHA_TEXT", "")
-        if captcha_text:
-            print("Filling Text Verification...")
-            page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification']").fill(captcha_text)
-        
+        # 5. Fill Text Verification box
+        if captcha_code:
+            print(f"Filling Text Verification box with: {captcha_code}")
+            page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification']").fill(captcha_code)
+        else:
+            print("Warning: No CAPTCHA code was extracted.")
+
         # 6. Click the Sign In button
         print("Submitting login form...")
         submit_button = page.locator("input[type='submit'], button[type='submit']")
         submit_button.click(force=True)
         
+        # 7. Wait for page load after submit
         page.wait_for_load_state("networkidle")
+
+        # --- VERIFICATION ---
+        current_url = page.url
+        print(f"Current page URL after submission: {current_url}")
+
+        logged_in_indicator = page.locator("a:has-text('Logout'), a:has-text('Log Keluar'), .user-avatar, .dashboard")
+        
+        if logged_in_indicator.count() > 0 or "home" not in current_url:
+            print("VERIFICATION SUCCESSFUL: Login was completed successfully!")
+        else:
+            print("VERIFICATION WARNING: Could not explicitly confirm login element.")
+
         browser.close()
 
 if __name__ == "__main__":
