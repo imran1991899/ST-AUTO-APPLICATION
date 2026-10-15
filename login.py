@@ -51,21 +51,25 @@ def login_oas():
         page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
         page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
-        # 4. Locate, capture, and extract the CAPTCHA using a broad selector for images near password/verification
+        # 4. Locate, capture, and extract the CAPTCHA using your exact XPath
         captcha_code = ""
         try:
-            print("Capturing CAPTCHA element...")
-            # Look for any image near the password or text verification field
-            captcha_img = page.locator("input[name*='captcha'] ~ img, tr:has-text('Text Verification') img, img[src*='captcha'], img[id*='captcha'], table img").first
+            print("Capturing CAPTCHA element using exact XPath...")
+            xpath_selector = "xpath=/html/body/div[1]/div/div/div[1]/div/div[2]/div/div[2]/div/div[2]/div/div[1]/section/div/div/div/form/fieldset/div/div/img"
+            captcha_img = page.locator(xpath_selector)
+            
             if captcha_img.count() > 0:
-                captcha_img.screenshot(path="captcha.png")
-                print("Saved captcha.png successfully.")
+                captcha_img.first.screenshot(path="captcha.png")
+                print("Saved captcha.png successfully via XPath.")
                 captcha_code = solve_captcha_image("captcha.png")
             else:
-                print("Specific captcha image selector failed, taking page snippet...")
-                page.screenshot(path="captcha.png")
+                print("XPath selector did not find the image, falling back to general locator...")
+                fallback_img = page.locator("img[src*='captcha'], img[id*='captcha']").first
+                if fallback_img.count() > 0:
+                    fallback_img.screenshot(path="captcha.png")
+                    captcha_code = solve_captcha_image("captcha.png")
         except Exception as e:
-            print(f"Error handling CAPTCHA image: {e}")
+            print(f"Error handling CAPTCHA image via XPath: {e}")
 
         # 5. Fill Text Verification box
         if captcha_code:
