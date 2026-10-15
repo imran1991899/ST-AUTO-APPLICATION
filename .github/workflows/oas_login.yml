@@ -35,3 +35,10 @@ jobs:
           OAS_PASSWORD: ${{ secrets.OAS_PASSWORD }}
         run: |
           python login.py
+
+      - name: Upload CAPTCHA Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captcha-debug-image
+          path: captcha.png
