@@ -1,9 +1,9 @@
 name: OAS Auto Login
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Allows manual trigger from the Actions tab
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *' # Optional: Runs daily at midnight UTC (adjust or remove if manual-only)
 
 jobs:
   login:
