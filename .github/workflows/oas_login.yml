@@ -2,8 +2,6 @@ name: OAS Auto Login
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 * * *'
 
 jobs:
   login:
@@ -28,5 +26,13 @@ jobs:
         env:
           OAS_EMAIL: ${{ secrets.OAS_EMAIL }}
           OAS_PASSWORD: ${{ secrets.OAS_PASSWORD }}
+          CAPTCHA_TEXT: ${{ secrets.CAPTCHA_TEXT }} # Optional: If you ever automate the answer
         run: |
           python login.py
+
+      - name: Upload CAPTCHA Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captcha-image
+          path: captcha.png
