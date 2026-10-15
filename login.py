@@ -1,14 +1,30 @@
 import os
 import pytesseract
-from PIL import Image, ImageOps
+from PIL import Image, ImageEnhance, ImageOps
 from playwright.sync_api import sync_playwright
 
 def solve_captcha_image(image_path):
     try:
         img = Image.open(image_path).convert('L')
-        img = ImageOps.autocontrast(img, cutoff=2)
-        config = '--oem 1 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+        
+        # Resize image larger to help OCR recognition accuracy
+        img = img.resize((img.width * 3, img.height * 3), Image.Resampling.LANCZOS)
+        
+        # Enhance contrast drastically
+        enhancer = ImageEnhance.Contrast(img)
+        img = enhancer.enhance(2.5)
+        
+        # Apply a threshold to remove light background and darken text/lines
+        threshold = 140
+        img = img.point(lambda p: 255 if p > threshold else 0)
+        
+        # Save processed image for debugging if needed
+        img.save("processed_captcha.png")
+
+        # Configure Tesseract specifically for single word/digits (PSM 8 or 7)
+        config = '--oem 3 --psm 8 -c tessedit_char_whitelist=0123456789'
         text = pytesseract.image_to_string(img, config=config)
+        
         clean_text = text.strip().replace(" ", "").replace("\n", "")
         print(f"OCR Extracted CAPTCHA Text: '{clean_text}'")
         return clean_text
