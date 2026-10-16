@@ -22,12 +22,19 @@ jobs:
         run: |
           curl -fsSL https://ollama.com/install.sh | sh
 
+      - name: Cache Ollama Models
+        uses: actions/cache@v4
+        id: ollama-cache
+        with:
+          path: ~/.ollama
+          key: ollama-${{ runner.os }}-moondream
+
       - name: Start Ollama Service and Pull Lightweight Vision Model
         run: |
           ollama serve &
           echo "Waiting for Ollama service to start..."
           sleep 5
-          # Pull moondream (fast, lightweight vision model ~1.8GB)
+          # If the model is already cached, ollama will skip downloading it
           ollama pull moondream
 
       - name: Install Python dependencies
@@ -43,9 +50,11 @@ jobs:
         run: |
           python login.py
 
-      - name: Upload Captured CAPTCHA Artifact
+      - name: Upload Captured Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: latest-captcha-snapshot
-          path: captcha.png
+          name: login-snapshots
+          path: |
+            captcha.png
+            success_login.png
