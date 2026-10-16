@@ -5,14 +5,13 @@ from PIL import Image
 from playwright.sync_api import sync_playwright
 
 def ask_ollama_to_solve_captcha(image_path):
-    """Sends the captcha image to the local Ollama instance to read the text."""
-    print("Sending CAPTCHA image to local Ollama vision model...")
+    print("Sending CAPTCHA image to lightweight Ollama vision model (moondream)...")
     url = "http://localhost:11434/api/generate"
     
-    # Using 'minicpm-v' or 'llava' (we will pull minicpm-v in the workflow as it's lightweight and fast for text/numbers)
+    # Using 'moondream' which is tiny (~1.8GB) and fast
     payload = {
-        "model": "minicpm-v",
-        "prompt": "Look at this image. Extract only the exact digits or characters shown inside the grey box. Output strictly the text/numbers with no extra words, spaces, or punctuation.",
+        "model": "moondream",
+        "prompt": "Read the numbers in this image. Output only the digits, with no extra text or spaces.",
         "images": [get_base64_image(image_path)],
         "stream": False
     }
@@ -21,7 +20,6 @@ def ask_ollama_to_solve_captcha(image_path):
         response = requests.post(url, json=payload, timeout=60)
         if response.status_code == 200:
             result = response.json().get("response", "").strip()
-            # Clean up the output to keep only alphanumeric characters
             clean_text = "".join(c for c in result if c.isalnum())
             print(f"Ollama successfully read CAPTCHA: '{clean_text}'")
             return clean_text
@@ -52,11 +50,11 @@ def login_oas():
         print("Navigating to OAS login page...")
         page.goto("https://oas.st.gov.my/en/home", timeout=60000)
 
-        # 1. Time buffer for the popup message to fully load
+        # Buffer for the popup message
         print("Buffer: Waiting for popup to appear...")
         page.wait_for_timeout(3000)
 
-        # 2. Close the popup notification
+        # Close the popup notification
         try:
             print("Attempting to close popup notification...")
             close_btn = page.locator("button.close, .close, [aria-label='Close'], button:has-text('x'), .ui-dialog-titlebar-close, .aui-button-icon-close")
@@ -67,12 +65,12 @@ def login_oas():
         except Exception as e:
             print(f"No popup found or already closed: {e}")
 
-        # 3. Fill Email Address and Password
+        # Fill credentials
         print("Filling Email Address and Password...")
         page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
         page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
-        # 4. Locate and screenshot the CAPTCHA image using exact XPath
+        # Locate and screenshot the CAPTCHA image using your exact XPath
         captcha_code = ""
         try:
             print("Capturing CAPTCHA image...")
@@ -83,14 +81,14 @@ def login_oas():
                 captcha_img.first.screenshot(path="captcha.png")
                 print("Saved captcha.png successfully.")
                 
-                # 5. Integrate with Ollama to read the CAPTCHA
+                # Ask Ollama (moondream) to read the CAPTCHA
                 captcha_code = ask_ollama_to_solve_captcha("captcha.png")
             else:
                 print("XPath captcha image not found.")
         except Exception as e:
             print(f"Error handling CAPTCHA screenshot: {e}")
 
-        # 6. Paste/fill the number into the text verification box
+        # Paste the number into the verification box
         if captcha_code:
             print(f"Pasting CAPTCHA text into verification box: {captcha_code}")
             verification_input = page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification'], tr:has-text('Text Verification') input")
@@ -98,14 +96,13 @@ def login_oas():
         else:
             print("Warning: Ollama could not extract a code.")
 
-        # 7. Click Sign In
+        # Click Sign In
         print("Clicking Sign In...")
         submit_button = page.locator("input[type='submit'], button[type='submit']")
         submit_button.click(force=True)
         
         page.wait_for_load_state("networkidle")
 
-        # --- VERIFICATION ---
         current_url = page.url
         print(f"Current page URL after submission: {current_url}")
 
