@@ -12,7 +12,11 @@ def ask_ollama_to_solve_captcha(image_path):
         "model": "moondream",
         "prompt": "Read the numbers in this image. Output only the digits, with no extra text or spaces.",
         "images": [get_base64_image(image_path)],
-        "stream": False
+        "stream": False,
+        "options": {
+            "temperature": 0.0,
+            "num_predict": 10
+        }
     }
 
     try:
