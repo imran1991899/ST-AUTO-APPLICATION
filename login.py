@@ -8,7 +8,6 @@ def ask_ollama_to_solve_captcha(image_path):
     print("Sending CAPTCHA image to lightweight Ollama vision model (moondream)...")
     url = "http://localhost:11434/api/generate"
     
-    # Using 'moondream' which is tiny (~1.8GB) and fast
     payload = {
         "model": "moondream",
         "prompt": "Read the numbers in this image. Output only the digits, with no extra text or spaces.",
@@ -70,21 +69,25 @@ def login_oas():
         page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
         page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
-        # Locate and screenshot the CAPTCHA image using your exact XPath
+        # Locate and screenshot the CAPTCHA image precisely above "Text Verification"
         captcha_code = ""
         try:
-            print("Capturing CAPTCHA image...")
-            xpath_selector = "xpath=/html/body/div[1]/div/div/div[1]/div/div[2]/div/div[2]/div/div[2]/div/div[1]/section/div/div/div/form/fieldset/div/div/img"
-            captcha_img = page.locator(xpath_selector)
+            print("Capturing CAPTCHA image above Text Verification...")
+            # Target the image row or element directly above the Text Verification field
+            captcha_img = page.locator("tr:has-text('Text Verification')").locator("xpath=preceding-tr[1]//img").first
             
+            if captcha_img.count() == 0:
+                # Fallback precise selector based on your screenshot layout
+                captcha_img = page.locator("input[placeholder*='Verification'], tr:has-text('Text Verification') input").locator("xpath=ancestor::table//img").first
+
             if captcha_img.count() > 0:
-                captcha_img.first.screenshot(path="captcha.png")
+                captcha_img.screenshot(path="captcha.png")
                 print("Saved captcha.png successfully.")
                 
-                # Ask Ollama (moondream) to read the CAPTCHA
+                # Ask Ollama to read the CAPTCHA
                 captcha_code = ask_ollama_to_solve_captcha("captcha.png")
             else:
-                print("XPath captcha image not found.")
+                print("Could not locate CAPTCHA image element.")
         except Exception as e:
             print(f"Error handling CAPTCHA screenshot: {e}")
 
