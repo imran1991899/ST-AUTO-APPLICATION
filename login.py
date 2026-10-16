@@ -115,6 +115,10 @@ def login_oas():
         current_url = page.url
         print(f"Current page URL after submission: {current_url}")
 
+        # Take screenshot for login verification
+        page.screenshot(path="success_login.png")
+        print("success login...")
+
         logged_in_indicator = page.locator("a:has-text('Logout'), a:has-text('Log Keluar'), .user-avatar, .dashboard")
         if logged_in_indicator.count() > 0 or "home" not in current_url:
             print("VERIFICATION SUCCESSFUL: Login was completed successfully!")
