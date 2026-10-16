@@ -12,7 +12,11 @@ def ask_ollama_to_solve_captcha(image_path):
         "model": "moondream",
         "prompt": "Read the numbers in this image. Output only the digits, with no extra text or spaces.",
         "images": [get_base64_image(image_path)],
-        "stream": False
+        "stream": False,
+        "options": {
+            "temperature": 0.0,
+            "num_predict": 10
+        }
     }
 
     try:
@@ -34,6 +38,15 @@ def get_base64_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
+def upload_files(page):
+    """Add your file upload automation logic here after a successful login."""
+    print("Ready to upload files...")
+    # Example:
+    # page.goto("https://oas.st.gov.my/en/your-upload-page-url")
+    # page.set_input_files("input[type='file']", "path/to/your/file.pdf")
+    # page.click("button:has-text('Upload')")
+    # page.wait_for_timeout(5000)
+
 def login_oas():
     email = os.environ.get("OAS_EMAIL")
     password = os.environ.get("OAS_PASSWORD")
@@ -53,10 +66,10 @@ def login_oas():
         print("Buffer: Waiting for popup notification to appear...")
         page.wait_for_timeout(4000)
 
-        # 2. Instantly remove/delete the popup element using your exact XPath
+        # 2. Instantly remove/delete the popup element using the updated XPath
         try:
             print("Removing popup notification element via JavaScript...")
-            xpath_popup = "/html/body/div[2]/div/div[2]"
+            xpath_popup = "/html/body/div[2]/div"
             page.evaluate(f"""
                 const element = document.evaluate("{xpath_popup}", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 if (element) {{
@@ -112,6 +125,10 @@ def login_oas():
         
         page.wait_for_load_state("networkidle")
 
+        # Buffer delay for slower network conditions after submit
+        print("Buffer: Waiting for post-login page to fully load...")
+        page.wait_for_timeout(5000)
+
         current_url = page.url
         print(f"Current page URL after submission: {current_url}")
 
@@ -122,6 +139,10 @@ def login_oas():
         logged_in_indicator = page.locator("a:has-text('Logout'), a:has-text('Log Keluar'), .user-avatar, .dashboard")
         if logged_in_indicator.count() > 0 or "home" not in current_url:
             print("VERIFICATION SUCCESSFUL: Login was completed successfully!")
+            
+            # --- CALL UPLOAD FUNCTION HERE INSTEAD OF CLOSING ---
+            upload_files(page)
+            
         else:
             print("VERIFICATION WARNING: Could not explicitly confirm login element.")
 
