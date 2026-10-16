@@ -69,27 +69,36 @@ def login_oas():
         page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
         page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
-        # Locate and screenshot the CAPTCHA image precisely above "Text Verification"
+        # Locate and screenshot the CAPTCHA image
         captcha_code = ""
         try:
-            print("Capturing CAPTCHA image above Text Verification...")
-            # Target the image row or element directly above the Text Verification field
-            captcha_img = page.locator("tr:has-text('Text Verification')").locator("xpath=preceding-tr[1]//img").first
+            print("Capturing CAPTCHA image...")
             
+            # 1. Target img tag inside the Sign In fieldset / form
+            captcha_img = page.locator("form img, fieldset img, img[src*='captcha'], img[src*='Captcha'], img[src*='servlet']").first
+            
+            # 2. Fallback using exact XPath provided earlier
             if captcha_img.count() == 0:
-                # Fallback precise selector based on your screenshot layout
-                captcha_img = page.locator("input[placeholder*='Verification'], tr:has-text('Text Verification') input").locator("xpath=ancestor::table//img").first
+                xpath_selector = "xpath=/html/body/div[1]/div/div/div[1]/div/div[2]/div/div[2]/div/div[2]/div/div[1]/section/div/div/div/form/fieldset/div/div/img"
+                captcha_img = page.locator(xpath_selector)
 
-            if captcha_img.count() > 0:
+            if captcha_img.count() > 0 and captcha_img.is_visible():
                 captcha_img.screenshot(path="captcha.png")
-                print("Saved captcha.png successfully.")
-                
-                # Ask Ollama to read the CAPTCHA
+                print("Saved captcha.png successfully from element.")
+            else:
+                print("Element locator failed. Saving full page snippet as captcha.png fallback...")
+                page.screenshot(path="captcha.png")
+
+            # Verify file exists on disk
+            if os.path.exists("captcha.png"):
                 captcha_code = ask_ollama_to_solve_captcha("captcha.png")
             else:
-                print("Could not locate CAPTCHA image element.")
+                print("Error: captcha.png could not be written to disk.")
+
         except Exception as e:
             print(f"Error handling CAPTCHA screenshot: {e}")
+            # Ensure file is created for GitHub Actions upload step
+            page.screenshot(path="captcha.png")
 
         # Paste the number into the verification box
         if captcha_code:
