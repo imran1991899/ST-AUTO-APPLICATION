@@ -49,34 +49,33 @@ def login_oas():
         print("Navigating to OAS login page...")
         page.goto("https://oas.st.gov.my/en/home", timeout=60000)
 
-        # 1. Buffer and robustly close the notification popup
+        # 1. Buffer time for the popup notification to render
         print("Buffer: Waiting for popup notification to appear...")
         page.wait_for_timeout(4000)
 
+        # 2. Instantly remove/delete the popup element using your exact XPath
         try:
-            print("Attempting to click close button on popup notification...")
-            # Targeting the exact close button shown in the modal dialog header
-            close_btn = page.locator(".ui-dialog-titlebar-close, button.ui-dialog-titlebar-close, .close, [aria-label='Close'], button:has-text('x')")
-            if close_btn.count() > 0:
-                close_btn.first.click(force=True)
-                print("Clicked popup close button successfully.")
-            else:
-                # Fallback: click anywhere outside or press Escape to dismiss modal
-                page.keyboard.press("Escape")
-                print("Pressed Escape to dismiss popup.")
-            
-            # Buffer time to ensure modal animation finishes completely
-            print("Waiting for popup modal to fully disappear...")
-            page.wait_for_timeout(2000)
+            print("Removing popup notification element via JavaScript...")
+            xpath_popup = "/html/body/div[2]/div/div[2]"
+            page.evaluate(f"""
+                const element = document.evaluate("{xpath_popup}", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                if (element) {{
+                    element.remove();
+                    console.log("Popup element successfully removed.");
+                }} else {{
+                    console.log("Popup element not found by XPath.");
+                }}
+            """)
+            page.wait_for_timeout(1000)
         except Exception as e:
-            print(f"Popup handling note: {e}")
+            print(f"Error removing popup element: {e}")
 
-        # 2. Fill credentials
+        # 3. Fill credentials
         print("Filling Email Address and Password...")
         page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
         page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
-        # 3. Locate and screenshot the CAPTCHA image
+        # 4. Locate and screenshot the CAPTCHA image
         captcha_code = ""
         try:
             print("Capturing CAPTCHA image...")
@@ -98,7 +97,7 @@ def login_oas():
             print(f"Error handling CAPTCHA screenshot: {e}")
             page.screenshot(path="captcha.png")
 
-        # 4. Paste the number into the verification box
+        # 5. Paste the number into the verification box
         if captcha_code:
             print(f"Pasting CAPTCHA text into verification box: {captcha_code}")
             verification_input = page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification'], tr:has-text('Text Verification') input")
@@ -106,7 +105,7 @@ def login_oas():
         else:
             print("Warning: Ollama could not extract a code.")
 
-        # 5. Click Sign In
+        # 6. Click Sign In
         print("Clicking Sign In...")
         submit_button = page.locator("input[type='submit'], button[type='submit']")
         submit_button.click(force=True)
