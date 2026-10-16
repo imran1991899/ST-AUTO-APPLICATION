@@ -112,6 +112,10 @@ def login_oas():
         
         page.wait_for_load_state("networkidle")
 
+        # Added buffer delay for slower network conditions after submit
+        print("Buffer: Waiting for post-login page to fully load...")
+        page.wait_for_timeout(5000)
+
         current_url = page.url
         print(f"Current page URL after submission: {current_url}")
 
