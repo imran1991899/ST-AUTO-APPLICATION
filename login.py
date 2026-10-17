@@ -85,8 +85,8 @@ def login_oas():
 
         # 3. Fill credentials
         print("Filling Email Address and Password...")
-        page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
-        page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
+        page.locator("input[type='email'], input[name*='email'], input[placeholder*='Email']").first.fill(email)
+        page.locator("input[type='password'], input[name*='password'], input[placeholder*='Password']").first.fill(password)
         
         # 4. Locate and screenshot the CAPTCHA image
         captcha_code = ""
