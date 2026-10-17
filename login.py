@@ -69,6 +69,39 @@ def navigate_to_e_application(page):
         print(f"Error navigating to e-Application: {e}")
         page.screenshot(path="e-application.png")
 
+def navigate_to_evcs_application(page):
+    """Searches for and clicks the 'LE2EVCS - Lesen Awam Pengagihan EV Charging Station' link and takes a screenshot."""
+    print("Searching for LE2EVCS - Lesen Awam Pengagihan EV Charging Station link...")
+    link_text = "LE2EVCS - Lesen Awam Pengagihan EV Charging Station"
+    screenshot_name = f"Click_{link_text}.png"
+
+    try:
+        page.wait_for_timeout(3000)
+        
+        # Locate and click the blue link
+        evcs_link = page.locator(f"a:has-text('{link_text}')").first
+        
+        if evcs_link.count() > 0 and evcs_link.is_visible():
+            evcs_link.click(force=True)
+            print(f"Clicked '{link_text}' successfully.")
+        else:
+            print(f"Link not immediately visible. Waiting for selector: {link_text}...")
+            page.wait_for_selector(f"a:has-text('{link_text}')", timeout=10000)
+            page.locator(f"a:has-text('{link_text}')").first.click(force=True)
+            print(f"Clicked '{link_text}' after waiting.")
+
+        # Wait for the page/form to load
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000)
+
+        # Take screenshot after link click
+        page.screenshot(path=screenshot_name)
+        print(f"Saved '{screenshot_name}' successfully.")
+
+    except Exception as e:
+        print(f"Error clicking LE2EVCS link: {e}")
+        page.screenshot(path=screenshot_name)
+
 def upload_files(page):
     """Add your file upload automation logic here after navigating to e-Application."""
     print("Ready to upload files...")
@@ -173,6 +206,9 @@ def login_oas():
             
             # --- NAVIGATE TO E-APPLICATION AND TAKE SCREENSHOT ---
             navigate_to_e_application(page)
+
+            # --- NAVIGATE TO EVCS APPLICATION AND TAKE SCREENSHOT ---
+            navigate_to_evcs_application(page)
 
             # --- CALL UPLOAD FUNCTION HERE INSTEAD OF CLOSING ---
             upload_files(page)
