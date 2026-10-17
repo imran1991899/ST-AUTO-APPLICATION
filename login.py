@@ -60,7 +60,7 @@ def login_oas():
         page = context.new_page()
 
         print("Navigating to OAS login page...")
-        page.goto("https://oas.st.gov.my/home", timeout=60000)
+        page.goto("https://oas.st.gov.my/en/home", timeout=60000)
 
         # 1. Buffer time for the popup notification to render
         print("Buffer: Waiting for popup notification to appear...")
@@ -85,8 +85,8 @@ def login_oas():
 
         # 3. Fill credentials
         print("Filling Email Address and Password...")
-        page.locator("input[type='email'], input[name*='email'], input[placeholder*='Email']").first.fill(email)
-        page.locator("input[type='password'], input[name*='password'], input[placeholder*='Password']").first.fill(password)
+        page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
+        page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
         # 4. Locate and screenshot the CAPTCHA image
         captcha_code = ""
