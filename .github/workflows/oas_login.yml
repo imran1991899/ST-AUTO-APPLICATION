@@ -58,3 +58,4 @@ jobs:
           path: |
             captcha.png
             success_login.png
+            e-application.png
