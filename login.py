@@ -39,22 +39,25 @@ def get_base64_image(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 def navigate_to_e_application(page):
-    """Searches for e-Application after successful login, clicks it, and takes a screenshot."""
+    """Adds a buffer, searches for e-Application in the top navigation bar, clicks it, and takes a screenshot."""
     print("Searching for e-Application...")
     try:
-        # Locate and click the 'e-Application' link or menu item
-        e_app_element = page.locator("a:has-text('e-Application'), button:has-text('e-Application'), text='e-Application'").first
+        # Buffer time to ensure the top menu is fully interactive after login redirect
+        page.wait_for_timeout(4000)
+        
+        # Explicitly target the top menu navigation link for e-Application
+        e_app_element = page.locator("a:has-text('e-Application')").first
         
         if e_app_element.count() > 0 and e_app_element.is_visible():
             e_app_element.click(force=True)
             print("Clicked e-Application successfully.")
         else:
-            print("e-Application locator not found directly. Trying alternative navigation...")
-            # Fallback using general text locator
-            page.get_by_text("e-Application", exact=False).first.click(force=True)
-            print("Clicked e-Application using fallback text locator.")
+            print("e-Application link not immediately visible. Waiting for selector...")
+            page.wait_for_selector("a:has-text('e-Application')", timeout=10000)
+            page.locator("a:has-text('e-Application')").first.click(force=True)
+            print("Clicked e-Application after waiting for selector.")
 
-        # Wait for the page or section to load
+        # Wait for the target page or content to load
         page.wait_for_load_state("networkidle")
         page.wait_for_timeout(3000)
 
