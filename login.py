@@ -38,8 +38,36 @@ def get_base64_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
+def navigate_to_e_application(page):
+    """Searches for e-Application after successful login, clicks it, and takes a screenshot."""
+    print("Searching for e-Application...")
+    try:
+        # Locate and click the 'e-Application' link or menu item
+        e_app_element = page.locator("a:has-text('e-Application'), button:has-text('e-Application'), text='e-Application'").first
+        
+        if e_app_element.count() > 0 and e_app_element.is_visible():
+            e_app_element.click(force=True)
+            print("Clicked e-Application successfully.")
+        else:
+            print("e-Application locator not found directly. Trying alternative navigation...")
+            # Fallback using general text locator
+            page.get_by_text("e-Application", exact=False).first.click(force=True)
+            print("Clicked e-Application using fallback text locator.")
+
+        # Wait for the page or section to load
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000)
+
+        # Take screenshot for e-Application verification
+        page.screenshot(path="e-application.png")
+        print("Saved e-application.png successfully.")
+
+    except Exception as e:
+        print(f"Error navigating to e-Application: {e}")
+        page.screenshot(path="e-application.png")
+
 def upload_files(page):
-    """Add your file upload automation logic here after a successful login."""
+    """Add your file upload automation logic here after navigating to e-Application."""
     print("Ready to upload files...")
     # Example:
     # page.goto("https://oas.st.gov.my/en/your-upload-page-url")
@@ -140,6 +168,9 @@ def login_oas():
         if logged_in_indicator.count() > 0 or "home" not in current_url:
             print("VERIFICATION SUCCESSFUL: Login was completed successfully!")
             
+            # --- NAVIGATE TO E-APPLICATION AND TAKE SCREENSHOT ---
+            navigate_to_e_application(page)
+
             # --- CALL UPLOAD FUNCTION HERE INSTEAD OF CLOSING ---
             upload_files(page)
             
