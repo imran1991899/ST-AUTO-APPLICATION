@@ -17,24 +17,36 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip' # Caches pip dependencies automatically
 
-      - name: Install Ollama
-        run: |
-          curl -fsSL https://ollama.com/install.sh | sh
-
-      - name: Cache Ollama Models
+      - name: Cache Ollama Binary and Models
         uses: actions/cache@v4
         id: ollama-cache
         with:
-          path: ~/.ollama
-          key: ollama-${{ runner.os }}-moondream
+          path: |
+            ~/.ollama
+            /usr/local/bin/ollama
+          key: ollama-cache-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ollama-cache-${{ runner.os }}-
 
-      - name: Start Ollama Service and Pull Lightweight Vision Model
+      - name: Install Ollama (If not cached)
+        if: steps.ollama-cache.outputs.cache-hit != 'true'
         run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama Service and Pull Model
+        run: |
+          # Start ollama in background
           ollama serve &
           echo "Waiting for Ollama service to start..."
-          sleep 5
-          # If the model is already cached, ollama will skip downloading it
+          
+          # Quick loop check instead of fixed sleep
+          until curl -s http://localhost:11434/api/tags > /dev/null; do
+            sleep 1
+          done
+          
+          # Pulls model if missing, or skips instantly if cached locally
           ollama pull moondream
 
       - name: Install Python dependencies
