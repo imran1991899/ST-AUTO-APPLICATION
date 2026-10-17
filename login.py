@@ -42,14 +42,9 @@ def upload_files(page):
     """Click 'e-Application' menu after login and take a screenshot."""
     print("Clicking 'e-Application'...")
     try:
-        # Click the e-Application menu link/button
         page.get_by_text("e-Application", exact=True).click()
-        
-        # Wait for the page or content to load after clicking
         page.wait_for_load_state("networkidle")
         page.wait_for_timeout(3000)
-        
-        # Take a screenshot after clicking e-Application
         page.screenshot(path="e_application_page.png")
         print("Screenshot saved as 'e_application_page.png' successfully.")
     except Exception as e:
@@ -64,7 +59,7 @@ def login_oas():
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context()
+        context = browser.new_context(viewport={"width": 1280, "height": 800})
         page = context.new_page()
 
         print("Navigating to OAS login page...")
@@ -91,10 +86,16 @@ def login_oas():
         except Exception as e:
             print(f"Error removing popup element: {e}")
 
-        # 3. Fill credentials
+        # 3. Fill credentials using robust input selectors
         print("Filling Email Address and Password...")
-        page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
-        page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
+        # Using resilient selectors tailored for standard login forms
+        email_input = page.locator("input[type='email'], input[name*='email'], input[id*='email']").first
+        if email_input.count() == 0:
+            email_input = page.locator("form input[type='text'], input").first
+        email_input.fill(email)
+
+        password_input = page.locator("input[type='password']").first
+        password_input.fill(password)
         
         # 4. Locate and screenshot the CAPTCHA image
         captcha_code = ""
@@ -121,14 +122,14 @@ def login_oas():
         # 5. Paste the number into the verification box
         if captcha_code:
             print(f"Pasting CAPTCHA text into verification box: {captcha_code}")
-            verification_input = page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification'], tr:has-text('Text Verification') input")
+            verification_input = page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification'], tr:has-text('Text Verification') input").first
             verification_input.fill(captcha_code)
         else:
             print("Warning: Ollama could not extract a code.")
 
         # 6. Click Sign In
         print("Clicking Sign In...")
-        submit_button = page.locator("input[type='submit'], button[type='submit']")
+        submit_button = page.locator("input[type='submit'], button[type='submit']").first
         submit_button.click(force=True)
         
         page.wait_for_load_state("networkidle")
@@ -148,7 +149,7 @@ def login_oas():
         if logged_in_indicator.count() > 0 or "home" not in current_url:
             print("VERIFICATION SUCCESSFUL: Login was completed successfully!")
             
-            # --- CALL UPLOAD FUNCTION HERE INSTEAD OF CLOSING ---
+            # --- CALL UPLOAD / E-APPLICATION FUNCTION ---
             upload_files(page)
             
         else:
