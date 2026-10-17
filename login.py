@@ -39,13 +39,21 @@ def get_base64_image(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 def upload_files(page):
-    """Add your file upload automation logic here after a successful login."""
-    print("Ready to upload files...")
-    # Example:
-    # page.goto("https://oas.st.gov.my/en/your-upload-page-url")
-    # page.set_input_files("input[type='file']", "path/to/your/file.pdf")
-    # page.click("button:has-text('Upload')")
-    # page.wait_for_timeout(5000)
+    """Click 'e-Application' menu after login and take a screenshot."""
+    print("Clicking 'e-Application'...")
+    try:
+        # Click the e-Application menu link/button
+        page.get_by_text("e-Application", exact=True).click()
+        
+        # Wait for the page or content to load after clicking
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(3000)
+        
+        # Take a screenshot after clicking e-Application
+        page.screenshot(path="e_application_page.png")
+        print("Screenshot saved as 'e_application_page.png' successfully.")
+    except Exception as e:
+        print(f"Error clicking e-Application or taking screenshot: {e}")
 
 def login_oas():
     email = os.environ.get("OAS_EMAIL")
