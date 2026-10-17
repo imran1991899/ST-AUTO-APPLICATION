@@ -39,27 +39,17 @@ def get_base64_image(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 def navigate_to_e_application(page):
-    """Adds a buffer, searches for e-Application in the top navigation bar, clicks it, and takes a screenshot."""
+    """Searches for e-Application in the top navigation bar, clicks it, and takes a screenshot."""
     print("Searching for e-Application...")
     try:
-        # Buffer time to ensure the top menu is fully interactive after login redirect
-        page.wait_for_timeout(4000)
-        
-        # Explicitly target the top menu navigation link for e-Application
+        # Dynamically wait for the top navigation menu link to appear
         e_app_element = page.locator("a:has-text('e-Application')").first
-        
-        if e_app_element.count() > 0 and e_app_element.is_visible():
-            e_app_element.click(force=True)
-            print("Clicked e-Application successfully.")
-        else:
-            print("e-Application link not immediately visible. Waiting for selector...")
-            page.wait_for_selector("a:has-text('e-Application')", timeout=10000)
-            page.locator("a:has-text('e-Application')").first.click(force=True)
-            print("Clicked e-Application after waiting for selector.")
+        e_app_element.wait_for(state="visible", timeout=10000)
+        e_app_element.click(force=True)
+        print("Clicked e-Application successfully.")
 
-        # Wait for the target page or content to load
-        page.wait_for_load_state("networkidle")
-        page.wait_for_timeout(3000)
+        # Wait for content load dynamically
+        page.wait_for_load_state("domcontentloaded")
 
         # Take screenshot for e-Application verification
         page.screenshot(path="e-application.png")
@@ -76,23 +66,14 @@ def navigate_to_evcs_application(page):
     screenshot_name = f"Click_{link_text}.png"
 
     try:
-        page.wait_for_timeout(3000)
-        
-        # Locate and click the blue link
+        # Dynamically wait for the specific link to appear
         evcs_link = page.locator(f"a:has-text('{link_text}')").first
-        
-        if evcs_link.count() > 0 and evcs_link.is_visible():
-            evcs_link.click(force=True)
-            print(f"Clicked '{link_text}' successfully.")
-        else:
-            print(f"Link not immediately visible. Waiting for selector: {link_text}...")
-            page.wait_for_selector(f"a:has-text('{link_text}')", timeout=10000)
-            page.locator(f"a:has-text('{link_text}')").first.click(force=True)
-            print(f"Clicked '{link_text}' after waiting.")
+        evcs_link.wait_for(state="visible", timeout=10000)
+        evcs_link.click(force=True)
+        print(f"Clicked '{link_text}' successfully.")
 
-        # Wait for the page/form to load
-        page.wait_for_load_state("networkidle")
-        page.wait_for_timeout(3000)
+        # Wait for load state
+        page.wait_for_load_state("domcontentloaded")
 
         # Take screenshot after link click
         page.screenshot(path=screenshot_name)
@@ -126,33 +107,26 @@ def login_oas():
         print("Navigating to OAS login page...")
         page.goto("https://oas.st.gov.my/en/home", timeout=60000)
 
-        # 1. Buffer time for the popup notification to render
-        print("Buffer: Waiting for popup notification to appear...")
-        page.wait_for_timeout(4000)
-
-        # 2. Instantly remove/delete the popup element using the updated XPath
+        # 1. Quick check for the popup notification element without a long static sleep
         try:
-            print("Removing popup notification element via JavaScript...")
+            print("Checking and removing popup notification element via JavaScript...")
             xpath_popup = "/html/body/div[2]/div"
             page.evaluate(f"""
                 const element = document.evaluate("{xpath_popup}", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 if (element) {{
                     element.remove();
                     console.log("Popup element successfully removed.");
-                }} else {{
-                    console.log("Popup element not found by XPath.");
                 }}
             """)
-            page.wait_for_timeout(1000)
         except Exception as e:
             print(f"Error removing popup element: {e}")
 
-        # 3. Fill credentials
+        # 2. Fill credentials immediately
         print("Filling Email Address and Password...")
         page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
         page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
-        # 4. Locate and screenshot the CAPTCHA image
+        # 3. Locate and screenshot the CAPTCHA image
         captcha_code = ""
         try:
             print("Capturing CAPTCHA image...")
@@ -174,7 +148,7 @@ def login_oas():
             print(f"Error handling CAPTCHA screenshot: {e}")
             page.screenshot(path="captcha.png")
 
-        # 5. Paste the number into the verification box
+        # 4. Paste the number into the verification box
         if captcha_code:
             print(f"Pasting CAPTCHA text into verification box: {captcha_code}")
             verification_input = page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification'], tr:has-text('Text Verification') input")
@@ -182,16 +156,13 @@ def login_oas():
         else:
             print("Warning: Ollama could not extract a code.")
 
-        # 6. Click Sign In
+        # 5. Click Sign In
         print("Clicking Sign In...")
         submit_button = page.locator("input[type='submit'], button[type='submit']")
         submit_button.click(force=True)
         
-        page.wait_for_load_state("networkidle")
-
-        # Buffer delay for slower network conditions after submit
-        print("Buffer: Waiting for post-login page to fully load...")
-        page.wait_for_timeout(5000)
+        # Fast load state trigger instead of static sleeping
+        page.wait_for_load_state("domcontentloaded")
 
         current_url = page.url
         print(f"Current page URL after submission: {current_url}")
