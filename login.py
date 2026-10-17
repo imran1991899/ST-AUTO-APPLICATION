@@ -39,16 +39,13 @@ def get_base64_image(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 def upload_files(page):
-    """Click 'e-Application' menu after login and take a screenshot."""
-    print("Clicking 'e-Application'...")
-    try:
-        page.get_by_text("e-Application", exact=True).click()
-        page.wait_for_load_state("networkidle")
-        page.wait_for_timeout(3000)
-        page.screenshot(path="e_application_page.png")
-        print("Screenshot saved as 'e_application_page.png' successfully.")
-    except Exception as e:
-        print(f"Error clicking e-Application or taking screenshot: {e}")
+    """Add your file upload automation logic here after a successful login."""
+    print("Ready to upload files...")
+    # Example:
+    # page.goto("https://oas.st.gov.my/en/your-upload-page-url")
+    # page.set_input_files("input[type='file']", "path/to/your/file.pdf")
+    # page.click("button:has-text('Upload')")
+    # page.wait_for_timeout(5000)
 
 def login_oas():
     email = os.environ.get("OAS_EMAIL")
@@ -59,7 +56,7 @@ def login_oas():
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context(viewport={"width": 1280, "height": 800})
+        context = browser.new_context()
         page = context.new_page()
 
         print("Navigating to OAS login page...")
@@ -86,16 +83,10 @@ def login_oas():
         except Exception as e:
             print(f"Error removing popup element: {e}")
 
-        # 3. Fill credentials using robust input selectors
+        # 3. Fill credentials
         print("Filling Email Address and Password...")
-        # Using resilient selectors tailored for standard login forms
-        email_input = page.locator("input[type='email'], input[name*='email'], input[id*='email']").first
-        if email_input.count() == 0:
-            email_input = page.locator("form input[type='text'], input").first
-        email_input.fill(email)
-
-        password_input = page.locator("input[type='password']").first
-        password_input.fill(password)
+        page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
+        page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
         # 4. Locate and screenshot the CAPTCHA image
         captcha_code = ""
@@ -122,14 +113,14 @@ def login_oas():
         # 5. Paste the number into the verification box
         if captcha_code:
             print(f"Pasting CAPTCHA text into verification box: {captcha_code}")
-            verification_input = page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification'], tr:has-text('Text Verification') input").first
+            verification_input = page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification'], tr:has-text('Text Verification') input")
             verification_input.fill(captcha_code)
         else:
             print("Warning: Ollama could not extract a code.")
 
         # 6. Click Sign In
         print("Clicking Sign In...")
-        submit_button = page.locator("input[type='submit'], button[type='submit']").first
+        submit_button = page.locator("input[type='submit'], button[type='submit']")
         submit_button.click(force=True)
         
         page.wait_for_load_state("networkidle")
@@ -149,7 +140,7 @@ def login_oas():
         if logged_in_indicator.count() > 0 or "home" not in current_url:
             print("VERIFICATION SUCCESSFUL: Login was completed successfully!")
             
-            # --- CALL UPLOAD / E-APPLICATION FUNCTION ---
+            # --- CALL UPLOAD FUNCTION HERE INSTEAD OF CLOSING ---
             upload_files(page)
             
         else:
