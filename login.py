@@ -183,17 +183,18 @@ def process_bahagian_sections(page):
             resize_screenshot_to_limit(screenshot_filename, 600)
             print(f"Saved {screenshot_filename} successfully.")
 
-            # Special check for Bahagian G to search and click "Simpan Draf"
+            # Special check for Bahagian G to search and click "Simpan Draf" with adjusted delay buffer
             if section == 'Bahagian G':
-                print("Searching for 'Simpan Draf' in Bahagian G...")
+                print("Adjusted delay buffer before searching for 'Simpan Draf' in Bahagian G...")
+                time.sleep(4)  # Adjusted delay buffer before clicking Simpan Draf
                 try:
-                    simpan_draf_btn = page.locator("button:has-text('Simpan Draf'), input[type='submit'][value*='Simpan Draf'], a:has-text('Simpan Draf')").first
-                    simpan_draf_btn.wait_for(state="visible", timeout=8000)
+                    simpan_draf_btn = page.locator("input[value*='Simpan Draf'], button:has-text('Simpan Draf'), input[type='button'][value*='Simpan Draf'], a:has-text('Simpan Draf')").first
+                    simpan_draf_btn.wait_for(state="visible", timeout=10000)
                     simpan_draf_btn.click(force=True)
                     print("Clicked 'Simpan Draf' successfully in Bahagian G.")
                     
                     page.wait_for_load_state("domcontentloaded")
-                    time.sleep(4) # Buffer after saving draft
+                    time.sleep(3) # Buffer after saving draft
                     
                     page.screenshot(path="bahagian_g_simpan_draf.png")
                     resize_screenshot_to_limit("bahagian_g_simpan_draf.png", 600)
