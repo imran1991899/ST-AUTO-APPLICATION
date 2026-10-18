@@ -65,7 +65,22 @@ def get_authenticated_service():
             pass
 
     # 3. Handle OAuth Handshake
-    flow = Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=REDIRECT_URI)
+    if os.path.exists(CLIENT_SECRETS_FILE):
+        flow = Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=REDIRECT_URI)
+    else:
+        # Fallback to Streamlit secrets if client_secrets.json is not present locally
+        client_config = {
+            "installed": {
+                "client_id": st.secrets["installed"]["client_id"],
+                "project_id": st.secrets["installed"]["project_id"],
+                "auth_uri": st.secrets["installed"]["auth_uri"],
+                "token_uri": st.secrets["installed"]["token_uri"],
+                "auth_provider_x509_cert_url": st.secrets["installed"]["auth_provider_x509_cert_url"],
+                "client_secret": st.secrets["installed"]["client_secret"],
+                "redirect_uris": [REDIRECT_URI]
+            }
+        }
+        flow = Flow.from_client_config(client_config, scopes=SCOPES, redirect_uri=REDIRECT_URI)
     
     query_params = st.query_params
 
