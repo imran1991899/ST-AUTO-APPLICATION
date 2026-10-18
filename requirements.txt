@@ -1,9 +1,9 @@
-playwright==1.49.0
-requests==2.31.0
-Pillow==11.0.0
 streamlit
 pandas
 openpyxl
+requests==2.31.0
+Pillow==11.0.0
+playwright==1.49.0
 google-api-python-client
 google-auth
 google-auth-httplib2
@@ -11,6 +11,4 @@ google-auth-oauthlib
 streamlit-javascript
 pydrive2
 gspread
-PyDrive
 pytz
-build
