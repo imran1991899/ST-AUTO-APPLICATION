@@ -4,6 +4,42 @@ import requests
 from PIL import Image
 from playwright.sync_api import sync_playwright
 
+def resize_screenshot_to_limit(image_path, max_size_kb=600):
+    """Resizes and compresses an image until it is under max_size_kb (600KB)."""
+    if not os.path.exists(image_path):
+        return
+    
+    max_bytes = max_size_kb * 1024
+    if os.path.getsize(image_path) <= max_bytes:
+        return
+
+    print(f"Compressing {image_path} to be under {max_size_kb}KB...")
+    try:
+        with Image.open(image_path) as img:
+            # Convert RGBA to RGB if saving as JPEG
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            
+            quality = 95
+            img.save(image_path, "JPEG", quality=quality)
+            
+            while os.path.getsize(image_path) > max_bytes and quality > 10:
+                quality -= 10
+                img.save(image_path, "JPEG", quality=quality)
+            
+            # If still too large, downscale dimensions
+            scale = 0.9
+            while os.path.getsize(image_path) > max_bytes and scale > 0.1:
+                new_width = int(img.width * scale)
+                new_height = int(img.height * scale)
+                resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                resized_img.save(image_path, "JPEG", quality=quality)
+                scale -= 0.1
+
+        print(f"Successfully compressed {image_path} to {os.path.getsize(image_path) / 1024:.2f}KB")
+    except Exception as e:
+        print(f"Error compressing screenshot {image_path}: {e}")
+
 def ask_ollama_to_solve_captcha(image_path):
     print("Sending CAPTCHA image to lightweight Ollama vision model (moondream)...")
     url = "http://localhost:11434/api/generate"
@@ -53,11 +89,13 @@ def navigate_to_e_application(page):
 
         # Take screenshot for e-Application verification
         page.screenshot(path="e-application.png")
+        resize_screenshot_to_limit("e-application.png", 600)
         print("Saved e-application.png successfully.")
 
     except Exception as e:
         print(f"Error navigating to e-Application: {e}")
         page.screenshot(path="e-application.png")
+        resize_screenshot_to_limit("e-application.png", 600)
 
 def navigate_to_evcs_application(page):
     """Searches for and clicks the 'LE2EVCS - Lesen Awam Pengagihan EV Charging Station' link and takes a screenshot."""
@@ -77,11 +115,13 @@ def navigate_to_evcs_application(page):
 
         # Take screenshot after link click
         page.screenshot(path=screenshot_name)
+        resize_screenshot_to_limit(screenshot_name, 600)
         print(f"Saved '{screenshot_name}' successfully.")
 
     except Exception as e:
         print(f"Error clicking LE2EVCS link: {e}")
         page.screenshot(path=screenshot_name)
+        resize_screenshot_to_limit(screenshot_name, 600)
 
 def search_after_hantar(page):
     """Searches for the button/element containing 'Hantar', clicks it, takes a screenshot, and saves another screenshot afterwards."""
@@ -92,6 +132,7 @@ def search_after_hantar(page):
         
         # Take screenshot before or right as we locate/interact with Hantar
         page.screenshot(path="before_hantar.png")
+        resize_screenshot_to_limit("before_hantar.png", 600)
         print("Saved before_hantar.png successfully.")
 
         hantar_element.click(force=True)
@@ -101,11 +142,13 @@ def search_after_hantar(page):
         
         # Take screenshot after Hantar click
         page.screenshot(path="after_hantar.png")
+        resize_screenshot_to_limit("after_hantar.png", 600)
         print("Saved after_hantar.png successfully.")
 
     except Exception as e:
         print(f"Error clicking 'Hantar': {e}")
         page.screenshot(path="after_hantar.png")
+        resize_screenshot_to_limit("after_hantar.png", 600)
 
 def upload_files(page):
     """Add your file upload automation logic here after navigating to e-Application."""
@@ -158,10 +201,12 @@ def login_oas():
             
             if captcha_img.count() > 0 and captcha_img.is_visible():
                 captcha_img.screenshot(path="captcha.png")
+                resize_screenshot_to_limit("captcha.png", 600)
                 print("Saved captcha.png successfully from element.")
             else:
                 print("Element locator failed. Saving full page snapshot as captcha.png fallback...")
                 page.screenshot(path="captcha.png")
+                resize_screenshot_to_limit("captcha.png", 600)
 
             if os.path.exists("captcha.png"):
                 captcha_code = ask_ollama_to_solve_captcha("captcha.png")
@@ -171,6 +216,7 @@ def login_oas():
         except Exception as e:
             print(f"Error handling CAPTCHA screenshot: {e}")
             page.screenshot(path="captcha.png")
+            resize_screenshot_to_limit("captcha.png", 600)
 
         # 4. Paste the number into the verification box
         if captcha_code:
@@ -193,6 +239,7 @@ def login_oas():
 
         # Take screenshot for login verification
         page.screenshot(path="success_login.png")
+        resize_screenshot_to_limit("success_login.png", 600)
         print("success login...")
 
         logged_in_indicator = page.locator("a:has-text('Logout'), a:has-text('Log Keluar'), .user-avatar, .dashboard")
