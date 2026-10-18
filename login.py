@@ -150,6 +150,65 @@ def search_after_hantar(page):
         page.screenshot(path="after_hantar.png")
         resize_screenshot_to_limit("after_hantar.png", 600)
 
+def process_bahagian_sections(page):
+    """Iterates through Bahagian A to Bahagian G, adding buffer, text fill/document uploads, and screenshots."""
+    sections = ['Bahagian A', 'Bahagian B', 'Bahagian C', 'Bahagian D', 'Bahagian E', 'Bahagian F', 'Bahagian G']
+    
+    for section in sections:
+        print(f"Processing {section}...")
+        try:
+            # Click the tab for the current Bahagian
+            tab_element = page.locator(f"a:has-text('{section}'), button:has-text('{section}'), td:has-text('{section}')").first
+            if tab_element.count() > 0 and tab_element.is_visible():
+                tab_element.click(force=True)
+                print(f"Clicked tab for {section}.")
+            else:
+                print(f"Tab for {section} not directly clickable by text, trying generic locator...")
+            
+            page.wait_for_load_state("domcontentloaded")
+            
+            # --- BUFFER TIME & PLACEHOLDER: ADD FUNCTION ADD TEXT AND DOCUMENT UPLOAD ---
+            print(f"Buffer active for {section}: waiting for manual/automated information filling...")
+            time.sleep(3) # Buffer time for section load and user information input preparation
+            
+            # TODO: add function add text and document upload
+            # Example text fill / document upload placeholder logic:
+            # page.fill("input[name='example']", "sample text")
+            # page.set_input_files("input[type='file']", "path/to/document.pdf")
+            
+            # Take screenshot for the current Bahagian
+            safe_name = section.replace(" ", "_").lower()
+            screenshot_filename = f"{safe_name}.png"
+            page.screenshot(path=screenshot_filename)
+            resize_screenshot_to_limit(screenshot_filename, 600)
+            print(f"Saved {screenshot_filename} successfully.")
+
+            # Special check for Bahagian G to search and click "Simpan Draf"
+            if section == 'Bahagian G':
+                print("Searching for 'Simpan Draf' in Bahagian G...")
+                try:
+                    simpan_draf_btn = page.locator("button:has-text('Simpan Draf'), input[type='submit'][value*='Simpan Draf'], a:has-text('Simpan Draf')").first
+                    simpan_draf_btn.wait_for(state="visible", timeout=5000)
+                    simpan_draf_btn.click(force=True)
+                    print("Clicked 'Simpan Draf' successfully in Bahagian G.")
+                    
+                    page.wait_for_load_state("domcontentloaded")
+                    time.sleep(2) # Buffer after saving draft
+                    
+                    page.screenshot(path="bahagian_g_simpan_draf.png")
+                    resize_screenshot_to_limit("bahagian_g_simpan_draf.png", 600)
+                    print("Saved bahagian_g_simpan_draf.png successfully.")
+                except Exception as ex_draft:
+                    print(f"Could not find or click 'Simpan Draf': {ex_draft}")
+                    page.screenshot(path="bahagian_g_simpan_draf.png")
+                    resize_screenshot_to_limit("bahagian_g_simpan_draf.png", 600)
+
+        except Exception as e:
+            print(f"Error processing {section}: {e}")
+            safe_name = section.replace(" ", "_").lower()
+            page.screenshot(path=f"{safe_name}.png")
+            resize_screenshot_to_limit(f"{safe_name}.png", 600)
+
 def upload_files(page):
     """Add your file upload automation logic here after navigating to e-Application."""
     print("Ready to upload files...")
@@ -254,6 +313,9 @@ def login_oas():
 
             # --- SEARCH AFTER HANTAR, TAKE SCREENSHOTS, AND CLICK IT ---
             search_after_hantar(page)
+
+            # --- PROCESS BAHAGIAN A TO G (WITH BUFFERS, TEXT/UPLOAD REMARK, AND SIMPAN DRAF) ---
+            process_bahagian_sections(page)
 
             # --- CALL UPLOAD FUNCTION HERE INSTEAD OF CLOSING ---
             upload_files(page)
