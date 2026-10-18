@@ -83,6 +83,30 @@ def navigate_to_evcs_application(page):
         print(f"Error clicking LE2EVCS link: {e}")
         page.screenshot(path=screenshot_name)
 
+def search_after_hantar(page):
+    """Searches for the button/element containing 'Hantar', clicks it, takes a screenshot, and saves another screenshot afterwards."""
+    print("Searching for 'Hantar' button/element to click...")
+    try:
+        hantar_element = page.locator("button:has-text('Hantar'), input[type='submit'][value*='Hantar'], a:has-text('Hantar')").first
+        hantar_element.wait_for(state="visible", timeout=10000)
+        
+        # Take screenshot before or right as we locate/interact with Hantar
+        page.screenshot(path="before_hantar.png")
+        print("Saved before_hantar.png successfully.")
+
+        hantar_element.click(force=True)
+        print("Clicked 'Hantar' successfully.")
+
+        page.wait_for_load_state("domcontentloaded")
+        
+        # Take screenshot after Hantar click
+        page.screenshot(path="after_hantar.png")
+        print("Saved after_hantar.png successfully.")
+
+    except Exception as e:
+        print(f"Error clicking 'Hantar': {e}")
+        page.screenshot(path="after_hantar.png")
+
 def upload_files(page):
     """Add your file upload automation logic here after navigating to e-Application."""
     print("Ready to upload files...")
@@ -180,6 +204,9 @@ def login_oas():
 
             # --- NAVIGATE TO EVCS APPLICATION AND TAKE SCREENSHOT ---
             navigate_to_evcs_application(page)
+
+            # --- SEARCH AFTER HANTAR, TAKE SCREENSHOTS, AND CLICK IT ---
+            search_after_hantar(page)
 
             # --- CALL UPLOAD FUNCTION HERE INSTEAD OF CLOSING ---
             upload_files(page)
