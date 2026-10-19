@@ -230,11 +230,11 @@ def append_row_to_gsheet(sheet_id, values, header):
 # --------- Initialize Session State ---------
 defaults = {
     "app_mode": "none",
-    "applicant_name": "",
-    "staff_id": "",
-    "department": "",
     "project_title": "",
-    "priority_level": "Medium",
+    "location": "",
+    "total_bay": "",
+    "total_evcs": "",
+    "evcs_type": "AC",
     "description": "",
     "uploaded_files": [],
     "tarikh_mulatugas_count": 1,
@@ -269,32 +269,27 @@ if nav_selection == "1. Main Page":
     if st.session_state.app_mode == "new":
         st.subheader("📝 New Application Submission")
 
-        applicant_name = st.text_input("👤 Applicant Full Name", value=st.session_state.applicant_name)
-        st.session_state.applicant_name = applicant_name
-
-        staff_id = st.text_input("🆔 Staff ID (8 digits)", value=st.session_state.staff_id)
-        if staff_id and (not staff_id.isdigit() or len(staff_id) != 8):
-            st.warning("⚠️ Staff ID must be exactly 8 digits.")
-        st.session_state.staff_id = staff_id
-
-        departments = ["", "Information Technology", "Operations", "Finance", "Human Resources", "Administration", "Marketing"]
-        department = st.selectbox(
-            "🏢 Department",
-            departments,
-            index=departments.index(st.session_state.department) if st.session_state.department in departments else 0
-        )
-        st.session_state.department = department
-
         project_title = st.text_input("📋 Project / Request Title", value=st.session_state.project_title)
         st.session_state.project_title = project_title
 
-        priorities = ["Low", "Medium", "High", "Urgent"]
-        priority_level = st.selectbox(
-            "⚡ Priority Level",
-            priorities,
-            index=priorities.index(st.session_state.priority_level) if st.session_state.priority_level in priorities else 1
+        location = st.text_input("📍 Location", value=st.session_state.location)
+        st.session_state.location = location
+
+        col_ev1, col_ev2 = st.columns(2)
+        with col_ev1:
+            total_bay = st.text_input("🅿️ Total Bay", value=st.session_state.total_bay)
+            st.session_state.total_bay = total_bay
+        with col_ev2:
+            total_evcs = st.text_input("🔌 Total No. EVCS", value=st.session_state.total_evcs)
+            st.session_state.total_evcs = total_evcs
+
+        evcs_types = ["AC", "DC", "AC & DC Hybrid"]
+        evcs_type = st.selectbox(
+            "⚡ EVCS TYPE",
+            evcs_types,
+            index=evcs_types.index(st.session_state.evcs_type) if st.session_state.evcs_type in evcs_types else 0
         )
-        st.session_state.priority_level = priority_level
+        st.session_state.evcs_type = evcs_type
 
         description = st.text_area("📄 Project Description & Objectives", value=st.session_state.description, height=150)
         st.session_state.description = description
@@ -706,11 +701,10 @@ if nav_selection == "1. Main Page":
         with tab_f:
             st.markdown("### 📌 Bahagian F : PENGAKUAN PEMOHON")
 
-            display_applicant = applicant_name if applicant_name else "TANG, JIANPING"
-            display_mykad = staff_id if staff_id else "EJ4566371"
+            display_applicant = project_title if project_title else "PEMOHON"
 
             f_check1 = st.checkbox(
-                f"*Saya {display_applicant} (No. MyKad : {display_mykad} ), mengaku bahawa maklumat-maklumat yang terkandung di dalam permohonan ini adalah benar dan kenyataan-kenyataan adalah betul dan saya sedar adalah menjadi suatu kesalahan di bawah seksyen 8 Akta Bekalan Elektrik 1990 jika maklumat-maklumat yang diberikan itu adalah palsu.",
+                f"*Saya {display_applicant}, mengaku bahawa maklumat-maklumat yang terkandung di dalam permohonan ini adalah benar dan kenyataan-kenyataan adalah betul dan saya sedar adalah menjadi suatu kesalahan di bawah seksyen 8 Akta Bekalan Elektrik 1990 jika maklumat-maklumat yang diberikan itu adalah palsu.",
                 key="f_check1"
             )
 
@@ -776,14 +770,10 @@ if nav_selection == "1. Main Page":
         with st.form(key="submit_form"):
             submit = st.form_submit_button("✅ Submit Application")
             if submit:
-                if not applicant_name.strip():
-                    st.warning("❗ Please enter the applicant's name.")
-                elif not staff_id.strip() or len(staff_id) != 8:
-                    st.warning("❗ Staff ID must be exactly 8 digits.")
-                elif not department:
-                    st.warning("❗ Please select a department.")
-                elif not project_title.strip():
+                if not project_title.strip():
                     st.warning("❗ Please provide a project title.")
+                elif not location.strip():
+                    st.warning("❗ Please provide a location.")
                 elif not description.strip():
                     st.warning("❗ Please provide a project description.")
                 elif not (f_check1 and f_check2 and f_check3):
@@ -916,8 +906,7 @@ if nav_selection == "1. Main Page":
                         bahagian_g_json = json.dumps(bahagian_g_data)
 
                         row = [
-                            timestamp, applicant_name, staff_id, department, 
-                            project_title, priority_level, description,
+                            timestamp, project_title, location, total_bay, total_evcs, evcs_type, description,
                             bahagian_a_info,
                             "Pengagihan" if pengagihan_check else "",
                             jumlah_keupayaan, kehendak_maksimum, final_punca_bekalan,
@@ -934,8 +923,7 @@ if nav_selection == "1. Main Page":
                         ]
 
                         header = [
-                            "Timestamp", "Applicant Name", "Staff ID", "Department", 
-                            "Project Title", "Priority", "Description",
+                            "Timestamp", "Project Title", "Location", "Total Bay", "Total EVCS", "EVCS Type", "Description",
                             "Bahagian A Info",
                             "Bahagian B - Aktiviti", "Jumlah Keupayaan (kW)", "Kehendak Maksimum (kW)", "Punca Bekalan",
                             "Tarif Caj Kehendak Max (RM/kW)", "Tarif Caj Puncak (sen/kWj)", "Tarif Caj Luar Puncak (sen/kWj)",
@@ -954,11 +942,11 @@ if nav_selection == "1. Main Page":
                         append_row_to_gsheet(gsheet_id, row, header)
 
                         st.session_state.update({
-                            "applicant_name": "",
-                            "staff_id": "",
-                            "department": "",
                             "project_title": "",
-                            "priority_level": "Medium",
+                            "location": "",
+                            "total_bay": "",
+                            "total_evcs": "",
+                            "evcs_type": "AC",
                             "description": "",
                             "uploaded_files": [],
                             "tarikh_mulatugas_count": 1,
