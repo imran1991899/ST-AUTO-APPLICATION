@@ -649,13 +649,54 @@ if nav_selection == "1. Main Page":
 
         # BAHAGIAN F
         with tab_f:
-            st.markdown("### 📌 BAHAGIAN F")
-            bahagian_f_info = st.text_area("Maklumat Bahagian F:", key="f_info")
+            st.markdown("### 📌 Bahagian F : PENGAKUAN PEMOHON")
+
+            display_applicant = applicant_name if applicant_name else "TANG, JIANPING"
+            display_mykad = staff_id if staff_id else "EJ4566371"
+
+            f_check1 = st.checkbox(
+                f"*Saya {display_applicant} (No. MyKad : {display_mykad} ), mengaku bahawa maklumat-maklumat yang terkandung di dalam permohonan ini adalah benar dan kenyataan-kenyataan adalah betul dan saya sedar adalah menjadi suatu kesalahan di bawah seksyen 8 Akta Bekalan Elektrik 1990 jika maklumat-maklumat yang diberikan itu adalah palsu.",
+                key="f_check1"
+            )
+
+            f_check2 = st.checkbox(
+                "*Saya akan melantik orang kompeten untuk menjaga, mengendalikan dan menyelia pepasangan menurut Akta Bekalan Elektrik 1990 dan Peraturan-Peraturan yang dibuat dibawahnya dan memaklumkan Suruhanjaya Tenaga berkenaan dengan perlantikan tersebut.",
+                key="f_check2"
+            )
+
+            f_check3 = st.checkbox(
+                "*Saya bersetuju untuk mematuhi terma-terma dan syarat-syarat lesen awam yang diberikan oleh Suruhanjaya Tenaga.",
+                key="f_check3"
+            )
 
         # BAHAGIAN G
         with tab_g:
-            st.markdown("### 📌 BAHAGIAN G")
-            bahagian_g_info = st.text_area("Maklumat Bahagian G:", key="g_info")
+            st.markdown("### 📌 Bahagian G : PENGESAHAN JURUTERA PROFESIONAL / ORANG KOMPETEN")
+
+            st.markdown("*Saya mengesahkan bahawa (Tandakan aktiviti yang berkenaan) :")
+
+            g_aktiviti_option = st.radio(
+                "Aktiviti Pengesahan:",
+                [
+                    "Pepasangan baru ini telah direkabentuk dan diselia oleh saya mengikut kehendak perundangan yang berkaitan serta mengikut amalan kejuruteraan yang baik (good engineering practice).",
+                    "Pepasangan sedia ada ini telah direkabentuk dan dipasang mengikut kehendak perundangan yang berkaitan serta mengikut amalan kejuruteraan yang baik (good engineering practice)."
+                ],
+                key="g_aktiviti_option"
+            )
+
+            g_nama = st.text_input("*Nama :", key="g_nama")
+            g_no_perakuan = st.text_input("*No. Perakuan :", key="g_no_perakuan")
+            g_alamat = st.text_area("*Alamat :", key="g_alamat")
+
+            st.caption("Pemohon dikehendaki membayar Fi Proses secara atas talian (online) terlebih dahulu sebelum menghantar permohonan.")
+
+            col_g1, col_g2, col_g3 = st.columns([2, 1, 1])
+            with col_g1:
+                st.button("Bayar Fi Proses & Hantar", key="g_btn_bayar")
+            with col_g2:
+                st.button("Simpan Draf", key="g_btn_draf")
+            with col_g3:
+                st.button("Hapus Draf", key="g_btn_hapus_draf")
 
         st.markdown("---")
         st.markdown("**📎 Attach Supporting Documents (Up to 5 files)**")
@@ -690,6 +731,8 @@ if nav_selection == "1. Main Page":
                     st.warning("❗ Please provide a project title.")
                 elif not description.strip():
                     st.warning("❗ Please provide a project description.")
+                elif not (f_check1 and f_check2 and f_check3):
+                    st.warning("❗ Please complete all declarations in Bahagian F before submitting.")
                 else:
                     try:
                         timestamp = datetime.now(MALAYSIA_ZONE).strftime("%Y-%m-%d %H:%M:%S")
@@ -799,6 +842,23 @@ if nav_selection == "1. Main Page":
                         }
                         bahagian_e_json = json.dumps(bahagian_e_data)
 
+                        # Process Bahagian F Data
+                        bahagian_f_data = {
+                            "pengakuan_maklumat_benar": f_check1,
+                            "pengakuan_lantik_orang_kompeten": f_check2,
+                            "pengakuan_patuh_syarat_lesen": f_check3
+                        }
+                        bahagian_f_json = json.dumps(bahagian_f_data)
+
+                        # Process Bahagian G Data
+                        bahagian_g_data = {
+                            "aktiviti_pengesahan": g_aktiviti_option,
+                            "nama": g_nama,
+                            "no_perakuan": g_no_perakuan,
+                            "alamat": g_alamat
+                        }
+                        bahagian_g_json = json.dumps(bahagian_g_data)
+
                         row = [
                             timestamp, applicant_name, staff_id, department, 
                             project_title, priority_level, description,
@@ -813,7 +873,7 @@ if nav_selection == "1. Main Page":
                             c_checklist_json, c_competent_json,
                             bahagian_d_info,
                             bahagian_e_json,
-                            bahagian_f_info, bahagian_g_info,
+                            bahagian_f_json, bahagian_g_json,
                             "; ".join(file_links)
                         ]
 
@@ -830,7 +890,7 @@ if nav_selection == "1. Main Page":
                             "Bahagian C Senarai Semak (JSON)", "Bahagian C Orang Kompeten (JSON)",
                             "Bahagian D Info",
                             "Bahagian E Maklumat Permohonan (JSON)",
-                            "Bahagian F Info", "Bahagian G Info",
+                            "Bahagian F Pengakuan (JSON)", "Bahagian G Pengesahan (JSON)",
                             "Attachments"
                         ]
 
