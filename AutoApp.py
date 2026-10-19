@@ -8,6 +8,7 @@ import time
 import os
 import pickle
 from urllib.parse import urlencode
+from PIL import Image
 
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
@@ -117,7 +118,48 @@ def get_authenticated_service():
 # --------- Google API Helper Functions ---------
 drive_service, sheets_service = get_authenticated_service()
 
+def compress_file_if_needed(file_bytes, filename, max_size_mb=2.0):
+    """Automatically compresses images if file size exceeds max_size_mb (default 2MB)."""
+    max_bytes = max_size_mb * 1024 * 1024
+    if len(file_bytes) <= max_bytes:
+        return file_bytes, filename
+
+    ext = os.path.splitext(filename)[1].lower()
+    if ext in ['.png', '.jpg', '.jpeg']:
+        try:
+            img = Image.open(BytesIO(file_bytes))
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            
+            quality = 85
+            output = BytesIO()
+            img.save(output, format="JPEG", quality=quality, optimize=True)
+            compressed_bytes = output.getvalue()
+            
+            # Reduce quality further if needed
+            while len(compressed_bytes) > max_bytes and quality > 20:
+                quality -= 15
+                output = BytesIO()
+                img.save(output, format="JPEG", quality=quality, optimize=True)
+                compressed_bytes = output.getvalue()
+            
+            # Resize image if still over limit
+            if len(compressed_bytes) > max_bytes:
+                img.thumbnail((img.width // 2, img.height // 2))
+                output = BytesIO()
+                img.save(output, format="JPEG", quality=30, optimize=True)
+                compressed_bytes = output.getvalue()
+                
+            new_filename = os.path.splitext(filename)[0] + ".jpg"
+            return compressed_bytes, new_filename
+        except Exception:
+            return file_bytes, filename
+    return file_bytes, filename
+
 def gdrive_upload_file(file_bytes, filename, mimetype, folder_id=None):
+    file_bytes, filename = compress_file_if_needed(file_bytes, filename, max_size_mb=2.0)
+    mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+    
     media = MediaIoBaseUpload(BytesIO(file_bytes), mimetype)
     file_metadata = {"name": filename}
     if folder_id:
@@ -407,14 +449,23 @@ if nav_selection == "1. Main Page":
             doc_c_data = {}
 
             def render_doc_row(no, label, has_fotokopi=True, extra_widget=None, key_prefix="c_doc"):
-                c1, c2, c3, c4 = st.columns([0.5, 4.5, 2.5, 1])
+                c1, c2, c3, c4 = st.columns([0.5, 4.0, 3.0, 1.5])
                 c1.write(f"**{no}.**")
                 c2.write(label)
                 if extra_widget:
                     extra_widget()
-                file_up = c3.file_uploader("Muat naik", key=f"{key_prefix}_file_{no}")
+                
+                with c3:
+                    file_up = st.file_uploader("Muat naik (Auto max 2MB)", key=f"{key_prefix}_file_{no}")
+                    use_cam = st.checkbox("📷 Ambil Gambar", key=f"{key_prefix}_usecam_{no}")
+                    cam_img = None
+                    if use_cam:
+                        cam_img = st.camera_input("Tangkap Gambar", key=f"{key_prefix}_cam_{no}")
+                    
+                    chosen_file = cam_img if cam_img else file_up
+
                 foto = c4.checkbox("Salinan Fotokopi", key=f"{key_prefix}_foto_{no}") if has_fotokopi else False
-                return file_up, foto
+                return chosen_file, foto
 
             # 1. Dokumen berkaitan syarikat
             st.markdown("#### 🏢 Dokumen berkaitan syarikat yang memohon dan disahkan.")
@@ -482,39 +533,43 @@ if nav_selection == "1. Main Page":
 
             # 4.4 & 4.5
             st.markdown("---")
-            c1, c2, c3, c4 = st.columns([0.5, 4.5, 2.5, 1])
+            c1, c2, c3, c4 = st.columns([0.5, 4.0, 3.0, 1.5])
             c1.write("**4.**")
             with c2:
                 st.write("Project Financial Run - bagi aktiviti Penjanaan :")
                 act_penjanaan = st.selectbox("Aktiviti Penjanaan:", ["--- Sila pilih ---", "Solar", "Biomass", "Hydro", "Lain-lain"], key="c_act_penjanaan")
                 st.caption("Arahan:\n1. Sila pilih aktiviti Penjanaan di atas.\n2. Muat turun fail excel berikut.\n3. Lengkapkan maklumat yang diperlukan dalam fail excel.\n4. Muat naik semula fail excel yang telah dilengkapkan.")
-            f_penjanaan = c3.file_uploader("Muat naik Excel Penjanaan", key="c_file_penjanaan")
+            with c3:
+                f_penjanaan = st.file_uploader("Muat naik Excel Penjanaan", key="c_file_penjanaan")
             foto_penjanaan = c4.checkbox("Fotokopi", key="c_foto_penjanaan")
             doc_c_data["Kewangan_4_Project_Financial_Run"] = {"file": f_penjanaan, "fotokopi": foto_penjanaan, "extra": act_penjanaan}
 
-            c1, c2, c3, c4 = st.columns([0.5, 4.5, 2.5, 1])
+            c1, c2, c3, c4 = st.columns([0.5, 4.0, 3.0, 1.5])
             c1.write("**5.**")
             with c2:
                 st.write("Simple Financial Analysis - bagi aktiviti Pengagihan")
                 st.caption("Arahan:\n1. Muat turun fail excel berikut: Simple Financial Analysis.xlsx\n2. Lengkapkan maklumat yang diperlukan dalam fail excel.\n3. Muat naik semula fail excel yang telah dilengkapkan.")
-            f_pengagihan = c3.file_uploader("Muat naik Excel Pengagihan", key="c_file_pengagihan")
+            with c3:
+                f_pengagihan = st.file_uploader("Muat naik Excel Pengagihan", key="c_file_pengagihan")
             foto_pengagihan = c4.checkbox("Fotokopi", key="c_foto_pengagihan")
             doc_c_data["Kewangan_5_Simple_Financial_Analysis"] = {"file": f_pengagihan, "fotokopi": foto_pengagihan}
 
             # 5. Ringkasan Projek
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("#### 📊 Ringkasan Projek")
-            c1, c2, c3, c4 = st.columns([0.5, 4.5, 2.5, 1])
+            c1, c2, c3, c4 = st.columns([0.5, 4.0, 3.0, 1.5])
             c1.write("**1.**")
             c2.write("Merangkumi maklumat aktiviti yang akan dilesenkan seperti cadangan teknikal & cadangan pembiayaan projek; lokasi pepasangan, aktiviti bangunan, product catalogue, insentif yang diperoleh, status kemajuan projek dan gambar tapak, serta maklumat-maklumat lain yang berkaitan.")
-            f_ringkasan1 = c3.file_uploader("Muat naik Ringkasan Projek", key="c_file_ringkasan1")
+            with c3:
+                f_ringkasan1 = st.file_uploader("Muat naik Ringkasan Projek", key="c_file_ringkasan1")
             foto_ringkasan1 = c4.checkbox("Fotokopi", key="c_foto_ringkasan1")
             doc_c_data["Ringkasan_1_Maklumat_Aktiviti"] = {"file": f_ringkasan1, "fotokopi": foto_ringkasan1}
 
-            c1, c2, c3, c4 = st.columns([0.5, 4.5, 2.5, 1])
+            c1, c2, c3, c4 = st.columns([0.5, 4.0, 3.0, 1.5])
             c1.write("**2.**")
             c2.write("Bagi permohonan pindaan lesen, sila nyatakan justifikasi ke atas permohonan pindaan yang dibuat.")
-            f_ringkasan2 = c3.file_uploader("Muat naik Justifikasi Pindaan", key="c_file_ringkasan2")
+            with c3:
+                f_ringkasan2 = st.file_uploader("Muat naik Justifikasi Pindaan", key="c_file_ringkasan2")
             foto_ringkasan2 = c4.checkbox("Fotokopi", key="c_foto_ringkasan2")
             doc_c_data["Ringkasan_2_Justifikasi_Pindaan"] = {"file": f_ringkasan2, "fotokopi": foto_ringkasan2}
 
@@ -768,8 +823,9 @@ if nav_selection == "1. Main Page":
                             uploaded_link = None
                             if file_obj:
                                 content = file_obj.getvalue() if hasattr(file_obj, "getvalue") else file_obj.read()
-                                clean_filename = f"{timestamp}_BahagianC_{key_doc[:30]}_{os.path.splitext(file_obj.name)[1]}"
-                                mimetype = mimetypes.guess_type(clean_filename)[0] or 'application/octet-stream'
+                                orig_name = getattr(file_obj, "name", "camera_capture.jpg")
+                                clean_filename = f"{timestamp}_BahagianC_{key_doc[:30]}_{os.path.splitext(orig_name)[1]}"
+                                mimetype = mimetypes.guess_type(clean_filename)[0] or 'image/jpeg'
                                 uploaded_link, _ = gdrive_upload_file(content, clean_filename, mimetype, FOLDER_ID)
                             
                             bahagian_c_summary[key_doc] = {
