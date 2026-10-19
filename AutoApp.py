@@ -401,8 +401,164 @@ if nav_selection == "1. Main Page":
 
         # BAHAGIAN C
         with tab_c:
-            st.markdown("### 📌 BAHAGIAN C")
-            bahagian_c_info = st.text_area("Maklumat Bahagian C:", key="c_info")
+            st.markdown("### 📌 BAHAGIAN C : DOKUMEN SOKONGAN & SENARAI SEMAK")
+
+            doc_c_data = {}
+
+            def render_doc_row(no, label, has_fotokopi=True, extra_widget=None, key_prefix="c_doc"):
+                c1, c2, c3, c4 = st.columns([0.5, 4.5, 2.5, 1])
+                c1.write(f"**{no}.**")
+                c2.write(label)
+                if extra_widget:
+                    extra_widget()
+                file_up = c3.file_uploader("Muat naik", key=f"{key_prefix}_file_{no}")
+                foto = c4.checkbox("Salinan Fotokopi", key=f"{key_prefix}_foto_{no}") if has_fotokopi else False
+                return file_up, foto
+
+            # 1. Dokumen berkaitan syarikat
+            st.markdown("#### 🏢 Dokumen berkaitan syarikat yang memohon dan disahkan.")
+            syarikat_docs = [
+                ("1", "*Borang 9 (Certificate of Incorporation)", False),
+                ("2", "Borang 13 (Certificate of Incorporation on change of name)", True),
+                ("3", "Borang 44 (Notice of Situation of Registered Office)", True),
+                ("4", "Borang 24 (Return of Allotment of Shares)", True),
+                ("5", "Borang 32A (Return for the Transfer of Shares Transaction)", True),
+                ("6", "Borang 49 (Return giving Particulars in Register of Directors, Managers and Secretaries and Changes of Particulars)", True),
+                ("7", "Borang 55 (Form Of Annual Return)", True),
+                ("8", "Memorandum and Articles of Association", True)
+            ]
+            for idx, label, has_foto in syarikat_docs:
+                f, foto = render_doc_row(idx, label, has_foto, key_prefix="c_syrkat")
+                doc_c_data[f"Syarikat_{idx}_{label}"] = {"file": f, "fotokopi": foto}
+
+            # 2. Lokasi pepasangan & lukisan-lukisan pepasangan
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("#### 🗺️ Lokasi pepasangan & lukisan-lukisan pepasangan bersaiz A3 atau A4.")
+            lokasi_docs = [
+                ("1", "*Pelan lokasi dan pelan tapak (menyatakan no. lot pepasangan dan no. lot bersebelahan)", False),
+                ("2", "Geran Tanah (Borang mesti lengkap)", True),
+                ("3", "Salinan perjanjian sewa bangunan/tapak (jika bukan milik pemohon)", True),
+                ("4", "Lukisan Skematik Utama Voltan Tinggi", True),
+                ("5", "*Lukisan Skematik Utama Voltan Rendah", False)
+            ]
+            for idx, label, has_foto in lokasi_docs:
+                f, foto = render_doc_row(idx, label, has_foto, key_prefix="c_lokasi")
+                doc_c_data[f"Lokasi_{idx}_{label}"] = {"file": f, "fotokopi": foto}
+
+            # 3. Kelulusan Agensi Kerajaan
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("#### 🏛️ Kelulusan Agensi Kerajaan")
+            kelulusan_docs = [
+                ("1", "*Salinan surat kelulusan Pihak Berkuasa Tempatan (Kebenaran Merancang)", False),
+                ("2", "Salinan surat kelulusan Kerajaan Negeri", True),
+                ("3", "Salinan surat kelulusan Jabatan Alam Sekitar", True),
+                ("4", "Salinan surat kelulusan permohonan bekalan pukal daripada pihak Utiliti", True),
+                ("5", "Surat/bil/invois caj sambungan yang dikenakan oleh pihak Utiliti", True),
+                ("6", "*Salinan surat kelulusan perlaksanaan PSS/CCC/NEMAS daripada pihak Utiliti", False),
+                ("7", "Salinan surat tawaran projek loji janakuasa", True),
+                ("8", "Salinan Sijil Kelulusan Tarif Galakan daripada SEDA", True),
+                ("9", "Perjanjian Jualan Tenaga (PPA)", True),
+                ("10", "Perjanjian Jual-Beli Tenaga dengan Utiliti (REPPA)", True),
+                ("11", "Perjanjian Bekalan Bahanapi (FSA)", True),
+                ("12", "Salinan Sijil Kelulusan Net Energy Metering (NEM) daripada SEDA", True),
+                ("13", "Lain-lain kelulusan", True)
+            ]
+            for idx, label, has_foto in kelulusan_docs:
+                f, foto = render_doc_row(idx, label, has_foto, key_prefix="c_kelulusan")
+                doc_c_data[f"Kelulusan_{idx}_{label}"] = {"file": f, "fotokopi": foto}
+
+            # 4. Analisis Kewangan
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("#### 💰 Analisis Kewangan")
+            kewangan_docs = [
+                ("1", "Letter Of Intent Daripada Pembiaya Kewangan", True),
+                ("2", "Letter Of Offer Daripada Pembiaya Kewangan", True),
+                ("3", "Dokumen perjanjian kewangan", True)
+            ]
+            for idx, label, has_foto in kewangan_docs:
+                f, foto = render_doc_row(idx, label, has_foto, key_prefix="c_kewangan")
+                doc_c_data[f"Kewangan_{idx}_{label}"] = {"file": f, "fotokopi": foto}
+
+            # 4.4 & 4.5
+            st.markdown("---")
+            c1, c2, c3, c4 = st.columns([0.5, 4.5, 2.5, 1])
+            c1.write("**4.**")
+            with c2:
+                st.write("Project Financial Run - bagi aktiviti Penjanaan :")
+                act_penjanaan = st.selectbox("Aktiviti Penjanaan:", ["--- Sila pilih ---", "Solar", "Biomass", "Hydro", "Lain-lain"], key="c_act_penjanaan")
+                st.caption("Arahan:\n1. Sila pilih aktiviti Penjanaan di atas.\n2. Muat turun fail excel berikut.\n3. Lengkapkan maklumat yang diperlukan dalam fail excel.\n4. Muat naik semula fail excel yang telah dilengkapkan.")
+            f_penjanaan = c3.file_uploader("Muat naik Excel Penjanaan", key="c_file_penjanaan")
+            foto_penjanaan = c4.checkbox("Fotokopi", key="c_foto_penjanaan")
+            doc_c_data["Kewangan_4_Project_Financial_Run"] = {"file": f_penjanaan, "fotokopi": foto_penjanaan, "extra": act_penjanaan}
+
+            c1, c2, c3, c4 = st.columns([0.5, 4.5, 2.5, 1])
+            c1.write("**5.**")
+            with c2:
+                st.write("Simple Financial Analysis - bagi aktiviti Pengagihan")
+                st.caption("Arahan:\n1. Muat turun fail excel berikut: Simple Financial Analysis.xlsx\n2. Lengkapkan maklumat yang diperlukan dalam fail excel.\n3. Muat naik semula fail excel yang telah dilengkapkan.")
+            f_pengagihan = c3.file_uploader("Muat naik Excel Pengagihan", key="c_file_pengagihan")
+            foto_pengagihan = c4.checkbox("Fotokopi", key="c_foto_pengagihan")
+            doc_c_data["Kewangan_5_Simple_Financial_Analysis"] = {"file": f_pengagihan, "fotokopi": foto_pengagihan}
+
+            # 5. Ringkasan Projek
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("#### 📊 Ringkasan Projek")
+            c1, c2, c3, c4 = st.columns([0.5, 4.5, 2.5, 1])
+            c1.write("**1.**")
+            c2.write("Merangkumi maklumat aktiviti yang akan dilesenkan seperti cadangan teknikal & cadangan pembiayaan projek; lokasi pepasangan, aktiviti bangunan, product catalogue, insentif yang diperoleh, status kemajuan projek dan gambar tapak, serta maklumat-maklumat lain yang berkaitan.")
+            f_ringkasan1 = c3.file_uploader("Muat naik Ringkasan Projek", key="c_file_ringkasan1")
+            foto_ringkasan1 = c4.checkbox("Fotokopi", key="c_foto_ringkasan1")
+            doc_c_data["Ringkasan_1_Maklumat_Aktiviti"] = {"file": f_ringkasan1, "fotokopi": foto_ringkasan1}
+
+            c1, c2, c3, c4 = st.columns([0.5, 4.5, 2.5, 1])
+            c1.write("**2.**")
+            c2.write("Bagi permohonan pindaan lesen, sila nyatakan justifikasi ke atas permohonan pindaan yang dibuat.")
+            f_ringkasan2 = c3.file_uploader("Muat naik Justifikasi Pindaan", key="c_file_ringkasan2")
+            foto_ringkasan2 = c4.checkbox("Fotokopi", key="c_foto_ringkasan2")
+            doc_c_data["Ringkasan_2_Justifikasi_Pindaan"] = {"file": f_ringkasan2, "fotokopi": foto_ringkasan2}
+
+            # 6. Salinan sijil kakitangan / Orang Kompeten yang dilantik
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("#### 👷 *Salinan sijil kakitangan / Orang Kompeten yang dilantik")
+            st.caption("**Makluman: WAJIB isi SALAH SATU daripada perkara di bawah.**")
+
+            st.markdown("##### 1. Jurutera Elektrik Kompeten / Jurutera Perkhidmatan / Penyelia Elektrik")
+            c_btn1, c_btn2 = st.columns([1, 1])
+            with c_btn1:
+                st.button("Cari", key="c_btn_cari1")
+            with c_btn2:
+                st.button("Reset", key="c_btn_reset1")
+
+            c_j1, c_j2 = st.columns(2)
+            with c_j1:
+                jurutera_mykad = st.text_input("No. MyKad :", key="c_jurutera_mykad")
+                jurutera_nama = st.text_input("Nama :", key="c_jurutera_nama")
+                jurutera_perakuan = st.text_input("No. Perakuan :", key="c_jurutera_perakuan")
+            with c_j2:
+                jurutera_kategori = st.text_input("Kategori/Sekatan :", key="c_jurutera_kategori")
+                jurutera_tarikh_tamat = st.date_input("Tarikh Tamat :", key="c_jurutera_tarikh_tamat")
+                jurutera_alamat = st.text_area("Alamat :", key="c_jurutera_alamat")
+
+            st.markdown("##### 2. Penjaga Jentera yang dilantik")
+            c_btn3, c_btn4 = st.columns([1, 1])
+            with c_btn3:
+                st.button("Cari", key="c_btn_cari2")
+            with c_btn4:
+                st.button("Reset", key="c_btn_reset2")
+
+            c_p1, c_p2 = st.columns(2)
+            with c_p1:
+                penjaga_mykad = st.text_input("No. MyKad :", key="c_penjaga_mykad")
+                penjaga_nama = st.text_input("Nama :", key="c_penjaga_nama")
+                penjaga_perakuan = st.text_input("No. Perakuan :", key="c_penjaga_perakuan")
+            with c_p2:
+                penjaga_kategori = st.text_input("Kategori/Sekatan :", key="c_penjaga_kategori")
+                penjaga_tarikh_tamat = st.date_input("Tarikh Tamat :", key="c_penjaga_tarikh_tamat")
+                penjaga_alamat = st.text_area("Alamat :", key="c_penjaga_alamat")
+
+            st.markdown("##### 3. Muat naik Surat Komitmen Pelantikan Sebelum Pepasangan Mula Tugas")
+            f_surat_jurutera = st.file_uploader("a. Surat Pelantikan Jurutera Elektrik Kompeten / Jurutera Perkhidmatan / Penyelia Elektrik :", key="c_f_surat_jurutera")
+            f_surat_penjaga = st.file_uploader("b. Surat Pelantikan Penjaga Jentera :", key="c_f_surat_penjaga")
 
         # BAHAGIAN D
         with tab_d:
@@ -485,6 +641,54 @@ if nav_selection == "1. Main Page":
 
                         pembekalan_json = json.dumps(edited_pembekalan_df.to_dict(orient="records"))
 
+                        # Process Bahagian C Uploads & Checklist
+                        bahagian_c_summary = {}
+                        for key_doc, doc_val in doc_c_data.items():
+                            file_obj = doc_val["file"]
+                            uploaded_link = None
+                            if file_obj:
+                                content = file_obj.getvalue() if hasattr(file_obj, "getvalue") else file_obj.read()
+                                clean_filename = f"{timestamp}_BahagianC_{key_doc[:30]}_{os.path.splitext(file_obj.name)[1]}"
+                                mimetype = mimetypes.guess_type(clean_filename)[0] or 'application/octet-stream'
+                                uploaded_link, _ = gdrive_upload_file(content, clean_filename, mimetype, FOLDER_ID)
+                            
+                            bahagian_c_summary[key_doc] = {
+                                "file_link": uploaded_link if uploaded_link else "Tiada",
+                                "salinan_fotokopi": doc_val.get("fotokopi", False),
+                                "extra": doc_val.get("extra", "")
+                            }
+
+                        # Process competent person surat pelantikan
+                        surat_jurutera_link = "Tiada"
+                        if f_surat_jurutera:
+                            content = f_surat_jurutera.getvalue() if hasattr(f_surat_jurutera, "getvalue") else f_surat_jurutera.read()
+                            clean_filename = f"{timestamp}_BahagianC_SuratJurutera_{os.path.splitext(f_surat_jurutera.name)[1]}"
+                            mimetype = mimetypes.guess_type(clean_filename)[0] or 'application/octet-stream'
+                            surat_jurutera_link, _ = gdrive_upload_file(content, clean_filename, mimetype, FOLDER_ID)
+
+                        surat_penjaga_link = "Tiada"
+                        if f_surat_penjaga:
+                            content = f_surat_penjaga.getvalue() if hasattr(f_surat_penjaga, "getvalue") else f_surat_penjaga.read()
+                            clean_filename = f"{timestamp}_BahagianC_SuratPenjaga_{os.path.splitext(f_surat_penjaga.name)[1]}"
+                            mimetype = mimetypes.guess_type(clean_filename)[0] or 'application/octet-stream'
+                            surat_penjaga_link, _ = gdrive_upload_file(content, clean_filename, mimetype, FOLDER_ID)
+
+                        bahagian_c_competent = {
+                            "jurutera": {
+                                "mykad": jurutera_mykad, "nama": jurutera_nama, "perakuan": jurutera_perakuan,
+                                "kategori": jurutera_kategori, "tarikh_tamat": str(jurutera_tarikh_tamat), "alamat": jurutera_alamat
+                            },
+                            "penjaga": {
+                                "mykad": penjaga_mykad, "nama": penjaga_nama, "perakuan": penjaga_perakuan,
+                                "kategori": penjaga_kategori, "tarikh_tamat": str(penjaga_tarikh_tamat), "alamat": penjaga_alamat
+                            },
+                            "surat_jurutera": surat_jurutera_link,
+                            "surat_penjaga": surat_penjaga_link
+                        }
+
+                        c_checklist_json = json.dumps(bahagian_c_summary)
+                        c_competent_json = json.dumps(bahagian_c_competent)
+
                         row = [
                             timestamp, applicant_name, staff_id, department, 
                             project_title, priority_level, description,
@@ -496,7 +700,8 @@ if nav_selection == "1. Main Page":
                             voltan_punca_bekalan, voltan_pengagihan,
                             ", ".join(sistem_agihan_selected), loji_janakuasa, caj_sambungan,
                             pembekalan_json,
-                            bahagian_c_info, bahagian_d_info, bahagian_e_info,
+                            c_checklist_json, c_competent_json,
+                            bahagian_d_info, bahagian_e_info,
                             bahagian_f_info, bahagian_g_info,
                             "; ".join(file_links)
                         ]
@@ -511,7 +716,8 @@ if nav_selection == "1. Main Page":
                             "Voltan Punca Bekalan (kV)", "Voltan Pengagihan (kV)",
                             "Sistem Agihan", "Loji Janakuasa Tunggusedia (kW)", "Caj Sambungan TNB/SESB (RM)",
                             "Pembekalan Table Data (JSON)",
-                            "Bahagian C Info", "Bahagian D Info", "Bahagian E Info",
+                            "Bahagian C Senarai Semak (JSON)", "Bahagian C Orang Kompeten (JSON)",
+                            "Bahagian D Info", "Bahagian E Info",
                             "Bahagian F Info", "Bahagian G Info",
                             "Attachments"
                         ]
