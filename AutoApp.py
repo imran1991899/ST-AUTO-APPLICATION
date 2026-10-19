@@ -235,6 +235,16 @@ defaults = {
     "total_bay": "",
     "total_evcs": "",
     "evcs_type": "AC",
+    "brand_model": "",
+    "no_of_units": "",
+    "rated_input_power": "",
+    "max_charging_power": "",
+    "mode_of_charging": "",
+    "connector_type": "",
+    "output_cable_size": "",
+    "no_of_charging_bays": "",
+    "gps_lat": "",
+    "gps_lon": "",
     "description": "",
     "tarikh_mulatugas_count": 1,
 }
@@ -289,6 +299,41 @@ if nav_selection == "1. Main Page":
             index=evcs_types.index(st.session_state.evcs_type) if st.session_state.evcs_type in evcs_types else 0
         )
         st.session_state.evcs_type = evcs_type
+
+        # --- New Technical Questions with Gray Placeholder Examples ---
+        st.markdown("---")
+        st.markdown("#### ⚡ EVCS Technical Specifications")
+
+        brand_model = st.text_input("Brand / Model", value=st.session_state.brand_model)
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: Guorui / GRD08-120SDE</p>", unsafe_allow_html=True)
+
+        no_of_units = st.text_input("No. of Units", value=st.session_state.no_of_units)
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2</p>", unsafe_allow_html=True)
+
+        rated_input_power = st.text_input("Rated Input Power (kW AC)", value=st.session_state.rated_input_power)
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 133 kW AC</p>", unsafe_allow_html=True)
+
+        max_charging_power = st.text_input("Max. Charging / Output Power (AC or DC)", value=st.session_state.max_charging_power)
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 120 kW / DC</p>", unsafe_allow_html=True)
+
+        mode_of_charging = st.text_input("Mode of Charging", value=st.session_state.mode_of_charging)
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: Mode 4</p>", unsafe_allow_html=True)
+
+        connector_type = st.text_input("Connector Type", value=st.session_state.connector_type)
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 8 × CCS 2</p>", unsafe_allow_html=True)
+
+        output_cable_size = st.text_input("Output Cable Size / Type (Charging Cable)", value=st.session_state.output_cable_size)
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: CSS2-5M-250A cable size 2 × 70 mm²+25mm²</p>", unsafe_allow_html=True)
+
+        no_of_charging_bays = st.text_input("No. of Charging Bays", value=st.session_state.no_of_charging_bays)
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 10</p>", unsafe_allow_html=True)
+
+        gps_lat = st.text_input("GPS Coordinate Latitude", value=st.session_state.gps_lat)
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693</p>", unsafe_allow_html=True)
+
+        gps_lon = st.text_input("GPS Coordinate Longitude", value=st.session_state.gps_lon)
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 101.686073</p>", unsafe_allow_html=True)
+        st.markdown("---")
 
         description = st.text_area("📄 Project Description & Objectives", value=st.session_state.description, height=150)
         st.session_state.description = description
@@ -877,7 +922,10 @@ if nav_selection == "1. Main Page":
                         bahagian_g_json = json.dumps(bahagian_g_data)
 
                         row = [
-                            timestamp, project_title, location, total_bay, total_evcs, evcs_type, description,
+                            timestamp, project_title, location, total_bay, total_evcs, evcs_type,
+                            brand_model, no_of_units, rated_input_power, max_charging_power,
+                            mode_of_charging, connector_type, output_cable_size, no_of_charging_bays,
+                            gps_lat, gps_lon, description,
                             bahagian_a_info,
                             "Pengagihan" if pengagihan_check else "",
                             jumlah_keupayaan, kehendak_maksimum, final_punca_bekalan,
@@ -893,7 +941,10 @@ if nav_selection == "1. Main Page":
                         ]
 
                         header = [
-                            "Timestamp", "Project Title", "Location", "Total Bay", "Total EVCS", "EVCS Type", "Description",
+                            "Timestamp", "Project Title", "Location", "Total Bay", "Total EVCS", "EVCS Type",
+                            "Brand / Model", "No. of Units", "Rated Input Power (kW AC)", "Max. Charging Power",
+                            "Mode of Charging", "Connector Type", "Output Cable Size", "No. of Charging Bays",
+                            "GPS Latitude", "GPS Longitude", "Description",
                             "Bahagian A Info",
                             "Bahagian B - Aktiviti", "Jumlah Keupayaan (kW)", "Kehendak Maksimum (kW)", "Punca Bekalan",
                             "Tarif Caj Kehendak Max (RM/kW)", "Tarif Caj Puncak (sen/kWj)", "Tarif Caj Luar Puncak (sen/kWj)",
@@ -916,6 +967,16 @@ if nav_selection == "1. Main Page":
                             "total_bay": "",
                             "total_evcs": "",
                             "evcs_type": "AC",
+                            "brand_model": "",
+                            "no_of_units": "",
+                            "rated_input_power": "",
+                            "max_charging_power": "",
+                            "mode_of_charging": "",
+                            "connector_type": "",
+                            "output_cable_size": "",
+                            "no_of_charging_bays": "",
+                            "gps_lat": "",
+                            "gps_lon": "",
                             "description": "",
                             "tarikh_mulatugas_count": 1,
                         })
