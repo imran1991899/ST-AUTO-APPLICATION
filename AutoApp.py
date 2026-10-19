@@ -256,6 +256,175 @@ if nav_selection == "1. Main Page":
         description = st.text_area("📄 Project Description & Objectives", value=st.session_state.description, height=150)
         st.session_state.description = description
 
+        st.markdown("---")
+        st.subheader("📋 Application Sections (Bahagian A - G)")
+
+        tab_a, tab_b, tab_c, tab_d, tab_e, tab_f, tab_g = st.tabs([
+            "Bahagian A", 
+            "Bahagian B", 
+            "Bahagian C", 
+            "Bahagian D", 
+            "Bahagian E", 
+            "Bahagian F", 
+            "Bahagian G"
+        ])
+
+        # BAHAGIAN A
+        with tab_a:
+            st.markdown("### 📌 BAHAGIAN A : MAKLUMAT PEMOHON")
+            st.info("Questions for Bahagian A can be added here.")
+
+        # BAHAGIAN B
+        with tab_b:
+            st.markdown("### 📌 BAHAGIAN B : AKTIVITI YANG DIJALANKAN")
+            st.markdown("*Sila pilih aktiviti yang dijalankan :")
+            pengagihan_check = st.checkbox("Pengagihan", value=True)
+
+            st.markdown("---")
+            st.markdown("#### 📄 Lampiran 5")
+            st.markdown("### Maklumat Pepasangan Bagi Aktiviti Pengagihan")
+
+            st.markdown("#### 1. Sistem Pengagihan")
+            col_b1, col_b2 = st.columns([3, 1])
+            with col_b1:
+                jumlah_keupayaan = st.text_input("*Jumlah keupayaan sistem pengagihan :", key="b_jumlah_keupayaan")
+            with col_b2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.text("kW")
+
+            col_b3, col_b4 = st.columns([3, 1])
+            with col_b3:
+                kehendak_maksimum = st.text_input("*Kehendak Maksimum :", key="b_kehendak_maksimum")
+            with col_b4:
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.text("kW")
+
+            punca_bekalan = st.radio(
+                "*Punca bekalan :",
+                ["TNB", "SESB", "Penjanaan Sendiri", "Lain-lain (Sila nyatakan)"],
+                key="b_punca_bekalan"
+            )
+            punca_bekalan_lain = ""
+            if punca_bekalan == "Lain-lain (Sila nyatakan)":
+                punca_bekalan_lain = st.text_input("Nyatakan punca bekalan lain:", key="b_punca_bekalan_lain")
+
+            st.markdown("*Tarif belian daripada utiliti :")
+            col_t1, col_t2 = st.columns([3, 2])
+            with col_t1:
+                tarif_kehendak_max = st.text_input("Caj kehendak maksimum:", key="b_tarif_kehendak_max")
+            with col_t2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.text("RM/kW (caj kehendak maksimum)")
+
+            col_t3, col_t4 = st.columns([3, 2])
+            with col_t3:
+                tarif_puncak = st.text_input("Caj bekalan puncak/caj tenaga:", key="b_tarif_puncak")
+            with col_t4:
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.text("sen/kWj (caj bekalan puncak/caj tenaga)")
+
+            col_t5, col_t6 = st.columns([3, 2])
+            with col_t5:
+                tarif_luar_puncak = st.text_input("Caj bekalan luar puncak:", key="b_tarif_luar_puncak")
+            with col_t6:
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.text("sen/kWj (caj bekalan luar puncak)")
+
+            col_b5, col_b6 = st.columns([3, 1])
+            with col_b5:
+                jumlah_tenaga_sebulan = st.text_input("*Jumlah tenaga elektrik dibeli sebulan dari utiliti :", key="b_jumlah_tenaga_sebulan")
+            with col_b6:
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.text("kWj")
+
+            bilangan_incomers = st.text_input("*Bilangan Incomers (punca bekalan TNB/SESB sahaja) :", key="b_bilangan_incomers")
+            nama_pencawang = st.text_input("*Nama Pencawang (punca bekalan TNB/SESB sahaja) :", key="b_nama_pencawang")
+
+            col_b7, col_b8 = st.columns([3, 1])
+            with col_b7:
+                voltan_punca_bekalan = st.text_input("*Voltan punca bekalan :", key="b_voltan_punca_bekalan")
+            with col_b8:
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.text("kV")
+
+            col_b9, col_b10 = st.columns([3, 1])
+            with col_b9:
+                voltan_pengagihan = st.text_input("*Voltan pengagihan :", key="b_voltan_pengagihan")
+            with col_b10:
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.text("kV")
+
+            st.markdown("*Sistem agihan :")
+            sistem_agihan_pendawaian = st.checkbox("Pendawaian dalaman", key="b_sa_pendawaian")
+            sistem_agihan_kabel = st.checkbox("Kabel bawah tanah", key="b_sa_kabel")
+            sistem_agihan_talian = st.checkbox("Talian atas", key="b_sa_talian")
+            sistem_agihan_lain_check = st.checkbox("Lain-lain (Sila nyatakan)", key="b_sa_lain_check")
+            sistem_agihan_lain = ""
+            if sistem_agihan_lain_check:
+                sistem_agihan_lain = st.text_input("Nyatakan sistem agihan lain:", key="b_sa_lain_text")
+
+            col_b11, col_b12 = st.columns([3, 1])
+            with col_b11:
+                loji_janakuasa = st.text_input("Loji Janakuasa Tunggusedia (jika ada) :", key="b_loji_janakuasa")
+            with col_b12:
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.text("kW")
+
+            col_b13, col_b14 = st.columns([1, 3])
+            with col_b13:
+                st.text("RM")
+            with col_b14:
+                caj_sambungan = st.text_input("Caj sambungan yang dikenakan oleh TNB/SESB :", key="b_caj_sambungan")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("#### 2. Pembekalan")
+
+            pembekalan_df = pd.DataFrame({
+                "Butiran": [
+                    "*Bilangan pengguna",
+                    "*Jumlah jualan tenaga elektrik sebulan yang dijangka kepada pengguna (kWj)",
+                    "*Kadar kehendak maksimum pengguna (kW)",
+                    "*Kos penyelenggaraan sebulan (RM)"
+                ],
+                "Industri": ["", "", "", ""],
+                "Komersial": ["", "", "", ""],
+                "Domestik": ["", "", "", ""]
+            })
+
+            edited_pembekalan_df = st.data_editor(
+                pembekalan_df,
+                disabled=["Butiran"],
+                hide_index=True,
+                use_container_width=True,
+                key="pembekalan_table"
+            )
+
+        # BAHAGIAN C
+        with tab_c:
+            st.markdown("### 📌 BAHAGIAN C")
+            st.info("Questions for Bahagian C can be added here.")
+
+        # BAHAGIAN D
+        with tab_d:
+            st.markdown("### 📌 BAHAGIAN D")
+            st.info("Questions for Bahagian D can be added here.")
+
+        # BAHAGIAN E
+        with tab_e:
+            st.markdown("### 📌 BAHAGIAN E")
+            st.info("Questions for Bahagian E can be added here.")
+
+        # BAHAGIAN F
+        with tab_f:
+            st.markdown("### 📌 BAHAGIAN F")
+            st.info("Questions for Bahagian F can be added here.")
+
+        # BAHAGIAN G
+        with tab_g:
+            st.markdown("### 📌 BAHAGIAN G")
+            st.info("Questions for Bahagian G can be added here.")
+
+        st.markdown("---")
         st.markdown("**📎 Attach Supporting Documents (Up to 5 files)**")
         uploaded_file = st.file_uploader("Upload file", type=["png", "jpg", "jpeg", "pdf", "docx"], key="file_uploader")
         
