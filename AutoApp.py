@@ -236,7 +236,6 @@ defaults = {
     "total_evcs": "",
     "evcs_type": "AC",
     "description": "",
-    "uploaded_files": [],
     "tarikh_mulatugas_count": 1,
 }
 
@@ -748,24 +747,6 @@ if nav_selection == "1. Main Page":
                 st.button("Hapus Draf", key="g_btn_hapus_draf")
 
         st.markdown("---")
-        st.markdown("**📎 Attach Supporting Documents (Up to 5 files)**")
-        uploaded_file = st.file_uploader("Upload file", type=["png", "jpg", "jpeg", "pdf", "docx"], key="file_uploader")
-        
-        if uploaded_file:
-            if uploaded_file not in st.session_state.uploaded_files and len(st.session_state.uploaded_files) < 5:
-                st.session_state.uploaded_files.append(uploaded_file)
-
-        if st.session_state.uploaded_files:
-            st.subheader("📁 Uploaded Files Preview")
-            to_delete = None
-            for i, f in enumerate(st.session_state.uploaded_files):
-                cols = st.columns([4, 1])
-                cols[0].text(f"File #{i + 1}: {f.name}")
-                if cols[1].button(f"❌ Remove #{i + 1}", key=f"del_file_{i}"):
-                    to_delete = i
-            if to_delete is not None:
-                st.session_state.uploaded_files.pop(to_delete)
-                st.rerun()
 
         with st.form(key="submit_form"):
             submit = st.form_submit_button("✅ Submit Application")
@@ -781,16 +762,6 @@ if nav_selection == "1. Main Page":
                 else:
                     try:
                         timestamp = datetime.now(MALAYSIA_ZONE).strftime("%Y-%m-%d %H:%M:%S")
-                        file_links = []
-                        
-                        for idx, file_obj in enumerate(st.session_state.uploaded_files):
-                            content = file_obj.getvalue() if hasattr(file_obj, "getvalue") else file_obj.read()
-                            clean_title = "".join([c for c in project_title if c.isalnum() or c in (' ', '_', '-')]).strip()
-                            filename = f"{timestamp}_{clean_title}_file{idx+1}{os.path.splitext(file_obj.name)[1]}"
-                            
-                            mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-                            link, _ = gdrive_upload_file(content, filename, mimetype, FOLDER_ID)
-                            file_links.append(link)
 
                         # Process selected 'Sistem Agihan' options
                         sistem_agihan_selected = []
@@ -918,8 +889,7 @@ if nav_selection == "1. Main Page":
                             c_checklist_json, c_competent_json,
                             bahagian_d_info,
                             bahagian_e_json,
-                            bahagian_f_json, bahagian_g_json,
-                            "; ".join(file_links)
+                            bahagian_f_json, bahagian_g_json
                         ]
 
                         header = [
@@ -934,8 +904,7 @@ if nav_selection == "1. Main Page":
                             "Bahagian C Senarai Semak (JSON)", "Bahagian C Orang Kompeten (JSON)",
                             "Bahagian D Info",
                             "Bahagian E Maklumat Permohonan (JSON)",
-                            "Bahagian F Pengakuan (JSON)", "Bahagian G Pengesahan (JSON)",
-                            "Attachments"
+                            "Bahagian F Pengakuan (JSON)", "Bahagian G Pengesahan (JSON)"
                         ]
 
                         gsheet_id = find_or_create_gsheet("general_applications", FOLDER_ID)
@@ -948,7 +917,6 @@ if nav_selection == "1. Main Page":
                             "total_evcs": "",
                             "evcs_type": "AC",
                             "description": "",
-                            "uploaded_files": [],
                             "tarikh_mulatugas_count": 1,
                         })
                         st.success("Application Submitted Successfully!")
