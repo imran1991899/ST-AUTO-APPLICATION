@@ -272,7 +272,7 @@ if nav_selection == "1. Main Page":
         # BAHAGIAN A
         with tab_a:
             st.markdown("### 📌 BAHAGIAN A : MAKLUMAT PEMOHON")
-            st.info("Questions for Bahagian A can be added here.")
+            bahagian_a_info = st.text_area("Maklumat Pemohon / Catatan Bahagian A:", key="a_info")
 
         # BAHAGIAN B
         with tab_b:
@@ -379,7 +379,7 @@ if nav_selection == "1. Main Page":
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("#### 2. Pembekalan")
 
-            pembekalan_df = pd.DataFrame({
+            default_pembekalan_df = pd.DataFrame({
                 "Butiran": [
                     "*Bilangan pengguna",
                     "*Jumlah jualan tenaga elektrik sebulan yang dijangka kepada pengguna (kWj)",
@@ -392,7 +392,7 @@ if nav_selection == "1. Main Page":
             })
 
             edited_pembekalan_df = st.data_editor(
-                pembekalan_df,
+                default_pembekalan_df,
                 disabled=["Butiran"],
                 hide_index=True,
                 use_container_width=True,
@@ -402,27 +402,27 @@ if nav_selection == "1. Main Page":
         # BAHAGIAN C
         with tab_c:
             st.markdown("### 📌 BAHAGIAN C")
-            st.info("Questions for Bahagian C can be added here.")
+            bahagian_c_info = st.text_area("Maklumat Bahagian C:", key="c_info")
 
         # BAHAGIAN D
         with tab_d:
             st.markdown("### 📌 BAHAGIAN D")
-            st.info("Questions for Bahagian D can be added here.")
+            bahagian_d_info = st.text_area("Maklumat Bahagian D:", key="d_info")
 
         # BAHAGIAN E
         with tab_e:
             st.markdown("### 📌 BAHAGIAN E")
-            st.info("Questions for Bahagian E can be added here.")
+            bahagian_e_info = st.text_area("Maklumat Bahagian E:", key="e_info")
 
         # BAHAGIAN F
         with tab_f:
             st.markdown("### 📌 BAHAGIAN F")
-            st.info("Questions for Bahagian F can be added here.")
+            bahagian_f_info = st.text_area("Maklumat Bahagian F:", key="f_info")
 
         # BAHAGIAN G
         with tab_g:
             st.markdown("### 📌 BAHAGIAN G")
-            st.info("Questions for Bahagian G can be added here.")
+            bahagian_g_info = st.text_area("Maklumat Bahagian G:", key="g_info")
 
         st.markdown("---")
         st.markdown("**📎 Attach Supporting Documents (Up to 5 files)**")
@@ -470,12 +470,51 @@ if nav_selection == "1. Main Page":
                             mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
                             link, _ = gdrive_upload_file(content, filename, mimetype, FOLDER_ID)
                             file_links.append(link)
-                        
+
+                        # Process selected 'Sistem Agihan' options
+                        sistem_agihan_selected = []
+                        if sistem_agihan_pendawaian: sistem_agihan_selected.append("Pendawaian dalaman")
+                        if sistem_agihan_kabel: sistem_agihan_selected.append("Kabel bawah tanah")
+                        if sistem_agihan_talian: sistem_agihan_selected.append("Talian atas")
+                        if sistem_agihan_lain_check and sistem_agihan_lain:
+                            sistem_agihan_selected.append(f"Lain-lain: {sistem_agihan_lain}")
+
+                        final_punca_bekalan = punca_bekalan
+                        if punca_bekalan == "Lain-lain (Sila nyatakan)" and punca_bekalan_lain:
+                            final_punca_bekalan = f"Lain-lain: {punca_bekalan_lain}"
+
+                        pembekalan_json = json.dumps(edited_pembekalan_df.to_dict(orient="records"))
+
                         row = [
                             timestamp, applicant_name, staff_id, department, 
-                            project_title, priority_level, description, "; ".join(file_links)
+                            project_title, priority_level, description,
+                            bahagian_a_info,
+                            "Pengagihan" if pengagihan_check else "",
+                            jumlah_keupayaan, kehendak_maksimum, final_punca_bekalan,
+                            tarif_kehendak_max, tarif_puncak, tarif_luar_puncak,
+                            jumlah_tenaga_sebulan, bilangan_incomers, nama_pencawang,
+                            voltan_punca_bekalan, voltan_pengagihan,
+                            ", ".join(sistem_agihan_selected), loji_janakuasa, caj_sambungan,
+                            pembekalan_json,
+                            bahagian_c_info, bahagian_d_info, bahagian_e_info,
+                            bahagian_f_info, bahagian_g_info,
+                            "; ".join(file_links)
                         ]
-                        header = ["Timestamp", "Applicant Name", "Staff ID", "Department", "Project Title", "Priority", "Description", "Attachments"]
+
+                        header = [
+                            "Timestamp", "Applicant Name", "Staff ID", "Department", 
+                            "Project Title", "Priority", "Description",
+                            "Bahagian A Info",
+                            "Bahagian B - Aktiviti", "Jumlah Keupayaan (kW)", "Kehendak Maksimum (kW)", "Punca Bekalan",
+                            "Tarif Caj Kehendak Max (RM/kW)", "Tarif Caj Puncak (sen/kWj)", "Tarif Caj Luar Puncak (sen/kWj)",
+                            "Jumlah Tenaga Sebulan (kWj)", "Bilangan Incomers", "Nama Pencawang",
+                            "Voltan Punca Bekalan (kV)", "Voltan Pengagihan (kV)",
+                            "Sistem Agihan", "Loji Janakuasa Tunggusedia (kW)", "Caj Sambungan TNB/SESB (RM)",
+                            "Pembekalan Table Data (JSON)",
+                            "Bahagian C Info", "Bahagian D Info", "Bahagian E Info",
+                            "Bahagian F Info", "Bahagian G Info",
+                            "Attachments"
+                        ]
 
                         gsheet_id = find_or_create_gsheet("general_applications", FOLDER_ID)
                         append_row_to_gsheet(gsheet_id, row, header)
