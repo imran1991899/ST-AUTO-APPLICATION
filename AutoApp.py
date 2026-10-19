@@ -195,6 +195,7 @@ defaults = {
     "priority_level": "Medium",
     "description": "",
     "uploaded_files": [],
+    "tarikh_mulatugas_count": 1,
 }
 
 for key, default in defaults.items():
@@ -567,8 +568,84 @@ if nav_selection == "1. Main Page":
 
         # BAHAGIAN E
         with tab_e:
-            st.markdown("### 📌 BAHAGIAN E")
-            bahagian_e_info = st.text_area("Maklumat Bahagian E:", key="e_info")
+            st.markdown("### 📌 Bahagian E : MAKLUMAT PERMOHONAN")
+
+            st.markdown("#### 1. Butiran Tapak Pepasangan")
+            st.caption("(Termasuk keseluruhan kawasan bekalan jika melibatkan aktiviti pengagihan)")
+
+            e_no_lot = st.text_input("*No. Lot :", key="e_no_lot")
+            e_lot_status = st.radio("Status Lot:", ["Tetap", "Sementara"], horizontal=True, key="e_lot_status")
+
+            e_mukim = st.text_input("*Mukim :", key="e_mukim")
+            e_daerah = st.text_input("*Daerah :", key="e_daerah")
+            e_poskod = st.text_input("*Poskod :", key="e_poskod")
+
+            negeri_list = [
+                "--- Sila pilih ---", "Johor", "Kedah", "Kelantan", "Melaka", 
+                "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Pulau Pinang", 
+                "Sabah", "Sarawak", "Selangor", "Terengganu", "W.P. Kuala Lumpur", 
+                "W.P. Labuan", "W.P. Putrajaya"
+            ]
+            e_negeri = st.selectbox("*Negeri :", negeri_list, key="e_negeri")
+
+            jenis_projek_list = ["--- Sila pilih ---", "Pembangunan Baru", "Peluasan / Peningkatan Kapasiti", "Pindaan Lesen", "Lain-lain"]
+            e_jenis_projek = st.selectbox("Jenis Projek :", jenis_projek_list, key="e_jenis_projek")
+
+            st.markdown("*Kategori Penggunaan :")
+            e_kat_pengilangan = st.checkbox("Pengilangan / Industri", key="e_kat_pengilangan")
+            e_kat_perladangan = st.checkbox("Perladangan", key="e_kat_perladangan")
+            e_kat_perniagaan = st.checkbox("Perniagaan", key="e_kat_perniagaan")
+            e_kat_lain_check = st.checkbox("Lain-lain (Sila nyatakan) :", key="e_kat_lain_check")
+            e_kat_lain_text = ""
+            if e_kat_lain_check:
+                e_kat_lain_text = st.text_input("Nyatakan kategori penggunaan lain:", key="e_kat_lain_text")
+
+            st.markdown("Bagi tujuan lesen persendirian, sila nyatakan sebab penjanaan sendiri :")
+            e_sebab_sementara = st.checkbox("Bekalan sementara", key="e_sebab_sementara")
+            e_sebab_ekonomi = st.checkbox("Lebih ekonomi", key="e_sebab_ekonomi")
+            e_sebab_tiada_utiliti = st.checkbox("Tiada bekalan utiliti", key="e_sebab_tiada_utiliti")
+            e_sebab_lain_check = st.checkbox("Lain-lain (Sila nyatakan) :", key="e_sebab_lain_check")
+            e_sebab_lain_text = ""
+            if e_sebab_lain_check:
+                e_sebab_lain_text = st.text_input("Nyatakan sebab penjanaan sendiri lain:", key="e_sebab_lain_text")
+
+            status_pepasangan_list = ["--- Sila pilih ---", "Dalam Perancangan", "Dalam Pembinaan", "Telah Siap", "Beroperasi"]
+            e_status_pepasangan = st.selectbox("*Status pepasangan :", status_pepasangan_list, key="e_status_pepasangan")
+
+            st.markdown("*Tempoh Lesen Diperlukan :")
+            col_e_t1, col_e_t2 = st.columns([3, 1])
+            with col_e_t1:
+                e_tempoh_lesen = st.text_input("Tempoh :", key="e_tempoh_lesen")
+            with col_e_t2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.text("tahun")
+
+            e_tarikh_mulai = st.date_input("Mulai :", key="e_tarikh_mulai")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            e_tarikh_pentauliahan = st.date_input("*Tarikh Pentauliahan Pepasangan :", key="e_tarikh_pentauliahan")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("*Tarikh Mulatugas :")
+
+            e_mulatugas_list = []
+            for i in range(st.session_state.tarikh_mulatugas_count):
+                col_m1, col_m2, col_m3 = st.columns([1, 3, 1])
+                with col_m1:
+                    st.markdown(f"<br><b>{i+1}</b>", unsafe_allow_html=True)
+                with col_m2:
+                    t_val = st.date_input(f"Tarikh Unit {i+1}:", key=f"e_mulatugas_tarikh_{i}")
+                    e_mulatugas_list.append({"unit": i+1, "tarikh": str(t_val)})
+                with col_m3:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("Hapus", key=f"e_hapus_mulatugas_{i}"):
+                        if st.session_state.tarikh_mulatugas_count > 1:
+                            st.session_state.tarikh_mulatugas_count -= 1
+                            st.rerun()
+
+            if st.button("Tambah", key="e_tambah_mulatugas"):
+                st.session_state.tarikh_mulatugas_count += 1
+                st.rerun()
 
         # BAHAGIAN F
         with tab_f:
@@ -689,6 +766,39 @@ if nav_selection == "1. Main Page":
                         c_checklist_json = json.dumps(bahagian_c_summary)
                         c_competent_json = json.dumps(bahagian_c_competent)
 
+                        # Process Bahagian E Data
+                        kat_penggunaan_list = []
+                        if e_kat_pengilangan: kat_penggunaan_list.append("Pengilangan / Industri")
+                        if e_kat_perladangan: kat_penggunaan_list.append("Perladangan")
+                        if e_kat_perniagaan: kat_penggunaan_list.append("Perniagaan")
+                        if e_kat_lain_check and e_kat_lain_text:
+                            kat_penggunaan_list.append(f"Lain-lain: {e_kat_lain_text}")
+
+                        sebab_penjanaan_list = []
+                        if e_sebab_sementara: sebab_penjanaan_list.append("Bekalan sementara")
+                        if e_sebab_ekonomi: sebab_penjanaan_list.append("Lebih ekonomi")
+                        if e_sebab_tiada_utiliti: sebab_penjanaan_list.append("Tiada bekalan utiliti")
+                        if e_sebab_lain_check and e_sebab_lain_text:
+                            sebab_penjanaan_list.append(f"Lain-lain: {e_sebab_lain_text}")
+
+                        bahagian_e_data = {
+                            "no_lot": e_no_lot,
+                            "lot_status": e_lot_status,
+                            "mukim": e_mukim,
+                            "daerah": e_daerah,
+                            "poskod": e_poskod,
+                            "negeri": e_negeri,
+                            "jenis_projek": e_jenis_projek,
+                            "kategori_penggunaan": kat_penggunaan_list,
+                            "sebab_penjanaan_sendiri": sebab_penjanaan_list,
+                            "status_pepasangan": e_status_pepasangan,
+                            "tempoh_lesen_tahun": e_tempoh_lesen,
+                            "tarikh_mulai": str(e_tarikh_mulai),
+                            "tarikh_pentauliahan": str(e_tarikh_pentauliahan),
+                            "tarikh_mulatugas": e_mulatugas_list
+                        }
+                        bahagian_e_json = json.dumps(bahagian_e_data)
+
                         row = [
                             timestamp, applicant_name, staff_id, department, 
                             project_title, priority_level, description,
@@ -701,7 +811,8 @@ if nav_selection == "1. Main Page":
                             ", ".join(sistem_agihan_selected), loji_janakuasa, caj_sambungan,
                             pembekalan_json,
                             c_checklist_json, c_competent_json,
-                            bahagian_d_info, bahagian_e_info,
+                            bahagian_d_info,
+                            bahagian_e_json,
                             bahagian_f_info, bahagian_g_info,
                             "; ".join(file_links)
                         ]
@@ -717,7 +828,8 @@ if nav_selection == "1. Main Page":
                             "Sistem Agihan", "Loji Janakuasa Tunggusedia (kW)", "Caj Sambungan TNB/SESB (RM)",
                             "Pembekalan Table Data (JSON)",
                             "Bahagian C Senarai Semak (JSON)", "Bahagian C Orang Kompeten (JSON)",
-                            "Bahagian D Info", "Bahagian E Info",
+                            "Bahagian D Info",
+                            "Bahagian E Maklumat Permohonan (JSON)",
                             "Bahagian F Info", "Bahagian G Info",
                             "Attachments"
                         ]
@@ -733,6 +845,7 @@ if nav_selection == "1. Main Page":
                             "priority_level": "Medium",
                             "description": "",
                             "uploaded_files": [],
+                            "tarikh_mulatugas_count": 1,
                         })
                         st.success("Application Submitted Successfully!")
                         time.sleep(2)
