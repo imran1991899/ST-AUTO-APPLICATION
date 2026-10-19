@@ -118,6 +118,36 @@ def get_authenticated_service():
 # --------- Google API Helper Functions ---------
 drive_service, sheets_service = get_authenticated_service()
 
+def get_or_create_project_folder(project_title, parent_folder_id):
+    """Finds or creates a Google Drive subfolder named after the Project Title inside iGREEN AUTO ASSETS folder."""
+    clean_title = "".join([c for c in project_title if c.isalnum() or c in (' ', '_', '-')]).strip()
+    if not clean_title:
+        clean_title = "Untitled_Project"
+    
+    query = f"'{parent_folder_id}' in parents and name = '{clean_title}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+    response = drive_service.files().list(
+        q=query,
+        fields="files(id, name)",
+        includeItemsFromAllDrives=True,
+        supportsAllDrives=True
+    ).execute()
+    
+    files = response.get("files", [])
+    if files:
+        return files[0]["id"]
+    
+    folder_metadata = {
+        "name": clean_title,
+        "mimeType": "application/vnd.google-apps.folder",
+        "parents": [parent_folder_id]
+    }
+    folder = drive_service.files().create(
+        body=folder_metadata,
+        fields="id",
+        supportsAllDrives=True
+    ).execute()
+    return folder.get("id")
+
 def compress_file_if_needed(file_bytes, filename, max_size_mb=2.0):
     """Automatically compresses images if file size exceeds max_size_mb (default 2MB)."""
     max_bytes = max_size_mb * 1024 * 1024
@@ -500,7 +530,7 @@ if nav_selection == "1. Main Page":
                     extra_widget()
                 
                 with c3:
-                    file_up = st.file_uploader("Muat naik (Auto max 2MB)", key=f"{key_prefix}_file_{no}")
+                    file_up = st.file_uploader("Muat naik (Auto max 2MB)", type=["pdf", "png", "jpg", "jpeg", "docx"], key=f"{key_prefix}_file_{no}")
                     use_cam = st.checkbox("📷 Ambil Gambar", key=f"{key_prefix}_usecam_{no}")
                     cam_img = None
                     if use_cam:
@@ -584,7 +614,7 @@ if nav_selection == "1. Main Page":
                 act_penjanaan = st.selectbox("Aktiviti Penjanaan:", ["--- Sila pilih ---", "Solar", "Biomass", "Hydro", "Lain-lain"], key="c_act_penjanaan")
                 st.caption("Arahan:\n1. Sila pilih aktiviti Penjanaan di atas.\n2. Muat turun fail excel berikut.\n3. Lengkapkan maklumat yang diperlukan dalam fail excel.\n4. Muat naik semula fail excel yang telah dilengkapkan.")
             with c3:
-                f_penjanaan = st.file_uploader("Muat naik Excel Penjanaan", key="c_file_penjanaan")
+                f_penjanaan = st.file_uploader("Muat naik Excel Penjanaan", type=["xlsx", "xls", "pdf"], key="c_file_penjanaan")
             foto_penjanaan = c4.checkbox("Fotokopi", key="c_foto_penjanaan")
             doc_c_data["Kewangan_4_Project_Financial_Run"] = {"file": f_penjanaan, "fotokopi": foto_penjanaan, "extra": act_penjanaan}
 
@@ -594,7 +624,7 @@ if nav_selection == "1. Main Page":
                 st.write("Simple Financial Analysis - bagi aktiviti Pengagihan")
                 st.caption("Arahan:\n1. Muat turun fail excel berikut: Simple Financial Analysis.xlsx\n2. Lengkapkan maklumat yang diperlukan dalam fail excel.\n3. Muat naik semula fail excel yang telah dilengkapkan.")
             with c3:
-                f_pengagihan = st.file_uploader("Muat naik Excel Pengagihan", key="c_file_pengagihan")
+                f_pengagihan = st.file_uploader("Muat naik Excel Pengagihan", type=["xlsx", "xls", "pdf"], key="c_file_pengagihan")
             foto_pengagihan = c4.checkbox("Fotokopi", key="c_foto_pengagihan")
             doc_c_data["Kewangan_5_Simple_Financial_Analysis"] = {"file": f_pengagihan, "fotokopi": foto_pengagihan}
 
@@ -605,7 +635,7 @@ if nav_selection == "1. Main Page":
             c1.write("**1.**")
             c2.write("Merangkumi maklumat aktiviti yang akan dilesenkan seperti cadangan teknikal & cadangan pembiayaan projek; lokasi pepasangan, aktiviti bangunan, product catalogue, insentif yang diperoleh, status kemajuan projek dan gambar tapak, serta maklumat-maklumat lain yang berkaitan.")
             with c3:
-                f_ringkasan1 = st.file_uploader("Muat naik Ringkasan Projek", key="c_file_ringkasan1")
+                f_ringkasan1 = st.file_uploader("Muat naik Ringkasan Projek", type=["pdf", "png", "jpg", "jpeg", "docx"], key="c_file_ringkasan1")
             foto_ringkasan1 = c4.checkbox("Fotokopi", key="c_foto_ringkasan1")
             doc_c_data["Ringkasan_1_Maklumat_Aktiviti"] = {"file": f_ringkasan1, "fotokopi": foto_ringkasan1}
 
@@ -613,7 +643,7 @@ if nav_selection == "1. Main Page":
             c1.write("**2.**")
             c2.write("Bagi permohonan pindaan lesen, sila nyatakan justifikasi ke atas permohonan pindaan yang dibuat.")
             with c3:
-                f_ringkasan2 = st.file_uploader("Muat naik Justifikasi Pindaan", key="c_file_ringkasan2")
+                f_ringkasan2 = st.file_uploader("Muat naik Justifikasi Pindaan", type=["pdf", "png", "jpg", "jpeg", "docx"], key="c_file_ringkasan2")
             foto_ringkasan2 = c4.checkbox("Fotokopi", key="c_foto_ringkasan2")
             doc_c_data["Ringkasan_2_Justifikasi_Pindaan"] = {"file": f_ringkasan2, "fotokopi": foto_ringkasan2}
 
@@ -657,8 +687,8 @@ if nav_selection == "1. Main Page":
                 penjaga_alamat = st.text_area("Alamat :", key="c_penjaga_alamat")
 
             st.markdown("##### 3. Muat naik Surat Komitmen Pelantikan Sebelum Pepasangan Mula Tugas")
-            f_surat_jurutera = st.file_uploader("a. Surat Pelantikan Jurutera Elektrik Kompeten / Jurutera Perkhidmatan / Penyelia Elektrik :", key="c_f_surat_jurutera")
-            f_surat_penjaga = st.file_uploader("b. Surat Pelantikan Penjaga Jentera :", key="c_f_surat_penjaga")
+            f_surat_jurutera = st.file_uploader("a. Surat Pelantikan Jurutera Elektrik Kompeten / Jurutera Perkhidmatan / Penyelia Elektrik :", type=["pdf", "png", "jpg", "jpeg", "docx"], key="c_f_surat_jurutera")
+            f_surat_penjaga = st.file_uploader("b. Surat Pelantikan Penjaga Jentera :", type=["pdf", "png", "jpg", "jpeg", "docx"], key="c_f_surat_penjaga")
 
         # BAHAGIAN D
         with tab_d:
@@ -813,6 +843,9 @@ if nav_selection == "1. Main Page":
                     try:
                         timestamp = datetime.now(MALAYSIA_ZONE).strftime("%Y-%m-%d %H:%M:%S")
 
+                        # Automatically create or use the dedicated project subfolder inside FOLDER_ID
+                        project_folder_id = get_or_create_project_folder(project_title, FOLDER_ID)
+
                         # Process selected 'Sistem Agihan' options
                         sistem_agihan_selected = []
                         if sistem_agihan_pendawaian: sistem_agihan_selected.append("Pendawaian dalaman")
@@ -827,7 +860,7 @@ if nav_selection == "1. Main Page":
 
                         pembekalan_json = json.dumps(edited_pembekalan_df.to_dict(orient="records"))
 
-                        # Process Bahagian C Uploads & Checklist
+                        # Process Bahagian C Uploads & Checklist (stored in project folder)
                         bahagian_c_summary = {}
                         for key_doc, doc_val in doc_c_data.items():
                             file_obj = doc_val["file"]
@@ -837,7 +870,7 @@ if nav_selection == "1. Main Page":
                                 orig_name = getattr(file_obj, "name", "camera_capture.jpg")
                                 clean_filename = f"{timestamp}_BahagianC_{key_doc[:30]}_{os.path.splitext(orig_name)[1]}"
                                 mimetype = mimetypes.guess_type(clean_filename)[0] or 'image/jpeg'
-                                uploaded_link, _ = gdrive_upload_file(content, clean_filename, mimetype, FOLDER_ID)
+                                uploaded_link, _ = gdrive_upload_file(content, clean_filename, mimetype, project_folder_id)
                             
                             bahagian_c_summary[key_doc] = {
                                 "file_link": uploaded_link if uploaded_link else "Tiada",
@@ -845,20 +878,20 @@ if nav_selection == "1. Main Page":
                                 "extra": doc_val.get("extra", "")
                             }
 
-                        # Process competent person surat pelantikan
+                        # Process competent person surat pelantikan (stored in project folder)
                         surat_jurutera_link = "Tiada"
                         if f_surat_jurutera:
                             content = f_surat_jurutera.getvalue() if hasattr(f_surat_jurutera, "getvalue") else f_surat_jurutera.read()
                             clean_filename = f"{timestamp}_BahagianC_SuratJurutera_{os.path.splitext(f_surat_jurutera.name)[1]}"
                             mimetype = mimetypes.guess_type(clean_filename)[0] or 'application/octet-stream'
-                            surat_jurutera_link, _ = gdrive_upload_file(content, clean_filename, mimetype, FOLDER_ID)
+                            surat_jurutera_link, _ = gdrive_upload_file(content, clean_filename, mimetype, project_folder_id)
 
                         surat_penjaga_link = "Tiada"
                         if f_surat_penjaga:
                             content = f_surat_penjaga.getvalue() if hasattr(f_surat_penjaga, "getvalue") else f_surat_penjaga.read()
                             clean_filename = f"{timestamp}_BahagianC_SuratPenjaga_{os.path.splitext(f_surat_penjaga.name)[1]}"
                             mimetype = mimetypes.guess_type(clean_filename)[0] or 'application/octet-stream'
-                            surat_penjaga_link, _ = gdrive_upload_file(content, clean_filename, mimetype, FOLDER_ID)
+                            surat_penjaga_link, _ = gdrive_upload_file(content, clean_filename, mimetype, project_folder_id)
 
                         bahagian_c_competent = {
                             "jurutera": {
