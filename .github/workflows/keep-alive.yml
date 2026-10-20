@@ -2,8 +2,8 @@ name: Streamlit Keep-Alive
 
 on:
   schedule:
-    # Irregular schedule with varying intervals (e.g., 4h, 5h, 7h gaps) to avoid linear bot patterns
-    - cron: '0 2,7,11,16,21 * * *'
+    # Runs every hour; Python logic decides randomly whether to execute or skip
+    - cron: '0 * * * *'
   workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
 
 jobs:
@@ -18,64 +18,73 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Simulate Human Browser Session
+      - name: Install Playwright Dependencies
+        run: |
+          pip install playwright
+          playwright install chromium
+
+      - name: Run Keep-Alive and Capture Screenshots
         run: |
           python -c '
-          import urllib.request
           import random
           import time
+          from playwright.sync_api import sync_playwright
 
-          # Random startup jitter (10 to 90 seconds) to avoid exact minute triggers
-          delay = random.randint(10, 90)
+          # Random probabilistic decision (~45% chance to run per hour)
+          should_run = random.choices([True, False], weights=[45, 55], k=1)[0]
+          if not should_run:
+              print("Random decision: Skipping this time slot to maintain an unpredictable pattern.")
+              exit(0)
+
+          print("Random decision: Proceeding with session execution.")
+
+          # Random startup jitter (10 to 180 seconds)
+          delay = random.randint(10, 180)
           print(f"Browser launching in {delay} seconds...")
           time.sleep(delay)
 
-          # Pool of links to select from randomly
+          # Both links to run sequentially
           urls = [
               "https://st-auto-application-np4xyno3ptrqqq7ebjgpjy.streamlit.app/",
               "https://st-auto-application-np4xyno3ptrqqq7ebjgpjy.streamlit.app/?state=XFXO1GxvpHi0UO4VIaVCC4dV4cZFQC&iss=https://accounts.google.com&code=4/0AXlqoi5laLudYdEYJJi2olXaphRvXW6DT5CZyly1cfeadZXMnaTOzFJ-kXU1SYmO4ZTTwA&scope=https://www.googleapis.com/auth/drive.file%20https://www.googleapis.com/auth/spreadsheets"
           ]
-          
-          target_url = random.choice(urls)
-          print(f"Navigating to target: {target_url}")
 
-          # Realistic browser User-Agent strings
-          user_agents = [
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15",
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
-              "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-          ]
-          
-          # Headers mimicking a genuine browser navigation request
-          headers = {
-              "User-Agent": random.choice(user_agents),
-              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-              "Accept-Language": "en-US,en;q=0.5",
-              "Accept-Encoding": "gzip, deflate, br",
-              "Connection": "keep-alive",
-              "Upgrade-Insecure-Requests": "1",
-              "Sec-Fetch-Dest": "document",
-              "Sec-Fetch-Mode": "navigate",
-              "Sec-Fetch-Site": "none",
-              "Sec-Fetch-User": "?1"
-          }
-
-          req = urllib.request.Request(target_url, headers=headers)
-
-          try:
-              with urllib.request.urlopen(req, timeout=30) as response:
-                  print(f"Connection successful. Status code: {response.status}")
+          with sync_playwright() as p:
+              # Launch headless browser
+              browser = p.chromium.launch(headless=True)
+              
+              for index, target_url in enumerate(urls, start=1):
+                  print(f"\n--- Processing Link {index}: {target_url} ---")
                   
-                  # Read full content to simulate downloading/rendering the HTML page
-                  page_content = response.read()
-                  print(f"Loaded page payload: {len(page_content)} bytes.")
+                  # Set a standard desktop viewport
+                  page = browser.new_page(viewport={"width": 1280, "height": 800})
+                  
+                  try:
+                      # Navigate and wait until network is idle (fully rendered)
+                      page.goto(target_url, timeout=45000, wait_until="networkidle")
+                      print(f"Successfully accessed link {index}.")
 
-                  # Simulate human dwell time (staying on the page for 4 to 15 seconds)
-                  dwell_time = random.uniform(4.0, 15.0)
-                  print(f"Simulating user reading dwell time for {dwell_time:.2f} seconds...")
-                  time.sleep(dwell_time)
-                  print("Session closed naturally.")
-          except Exception as e:
-              print(f"Session encountered an error: {e}")
+                      # Simulate human reading dwell time (5 to 20 seconds)
+                      dwell_time = random.uniform(5.0, 20.0)
+                      print(f"Simulating user reading dwell time for {dwell_time:.2f} seconds...")
+                      time.sleep(dwell_time)
+
+                      # Take a viewport-only screenshot to keep the file size < 2MB (typically ~200-400 KB)
+                      screenshot_path = f"streamlit_screenshot_{index}.png"
+                      page.screenshot(path=screenshot_path, full_page=False)
+                      print(f"Screenshot successfully saved to {screenshot_path}")
+
+                  except Exception as e:
+                      print(f"Session encountered an error on link {index}: {e}")
+                  finally:
+                      page.close()
+
+              browser.close()
           '
+
+      - name: Upload Screenshots as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamlit-screenshots
+          path: streamlit_screenshot_*.png
+          retention-days: 3
