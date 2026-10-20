@@ -1,0 +1,66 @@
+name: Streamlit Keep-Alive
+
+on:
+  schedule:
+    # Runs every 5 hours
+    - cron: '0 */5 * * *'
+  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
+
+jobs:
+  ping-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Send human-like ping to Streamlit
+        run: |
+          python -c '
+          import urllib.request
+          import random
+          import time
+
+          # Add a random initial jitter between 1 to 45 seconds to break rigid patterns
+          delay = random.randint(1, 45)
+          print(f"Waiting {delay} seconds before sending request...")
+          time.sleep(delay)
+
+          # List of target links to cycle through randomly
+          urls = [
+              "https://st-auto-application-np4xyno3ptrqqq7ebjgpjy.streamlit.app/",
+              "https://st-auto-application-np4xyno3ptrqqq7ebjgpjy.streamlit.app/?state=XFXO1GxvpHi0UO4VIaVCC4dV4cZFQC&iss=https://accounts.google.com&code=4/0AXlqoi5laLudYdEYJJi2olXaphRvXW6DT5CZyly1cfeadZXMnaTOzFJ-kXU1SYmO4ZTTwA&scope=https://www.googleapis.com/auth/drive.file%20https://www.googleapis.com/auth/spreadsheets"
+          ]
+          
+          url = random.choice(urls)
+          print(f"Targeting URL: {url}")
+
+          # Rotate realistic browser User-Agents to avoid standard bot detection signatures
+          user_agents = [
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15",
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+              "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+          ]
+          
+          headers = {
+              "User-Agent": random.choice(user_agents),
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+              "Accept-Language": "en-US,en;q=0.5",
+              "Accept-Encoding": "gzip, deflate, br",
+              "Connection": "keep-alive",
+              "Upgrade-Insecure-Requests": "1"
+          }
+
+          req = urllib.request.Request(url, headers=headers)
+
+          try:
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  print(f"Successfully pinged! Status code: {response.status}")
+          except Exception as e:
+              print(f"Ping failed with error: {e}")
+          '
