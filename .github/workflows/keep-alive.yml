@@ -2,9 +2,8 @@ name: Streamlit Keep-Alive
 
 on:
   schedule:
-    # Runs every hour; Python logic decides randomly whether to execute or skip
     - cron: '0 * * * *'
-  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
+  workflow_dispatch:
 
 jobs:
   ping-app:
@@ -26,11 +25,11 @@ jobs:
       - name: Run Keep-Alive and Capture Screenshots
         run: |
           python -c '
+          import os
           import random
           import time
           from playwright.sync_api import sync_playwright
 
-          # Random probabilistic decision (~45% chance to run per hour)
           should_run = random.choices([True, False], weights=[45, 55], k=1)[0]
           if not should_run:
               print("Random decision: Skipping this time slot to maintain an unpredictable pattern.")
@@ -38,7 +37,6 @@ jobs:
 
           print("Random decision: Proceeding with session execution.")
 
-          # Random startup jitter (10 to 180 seconds)
           delay = random.randint(10, 180)
           print(f"Browser launching in {delay} seconds...")
           time.sleep(delay)
@@ -48,6 +46,9 @@ jobs:
               "https://st-auto-application-np4xyno3ptrqqq7ebjgpjy.streamlit.app/?state=XFXO1GxvpHi0UO4VIaVCC4dV4cZFQC&iss=https://accounts.google.com&code=4/0AXlqoi5laLudYdEYJJi2olXaphRvXW6DT5CZyly1cfeadZXMnaTOzFJ-kXU1SYmO4ZTTwA&scope=https://www.googleapis.com/auth/drive.file%20https://www.googleapis.com/auth/spreadsheets"
           ]
 
+          workspace_dir = os.getcwd()
+          print(f"Workspace directory: {workspace_dir}")
+
           with sync_playwright() as p:
               browser = p.chromium.launch(headless=True)
               
@@ -56,20 +57,19 @@ jobs:
                   page = browser.new_page(viewport={"width": 1280, "height": 800})
                   
                   try:
-                      # Use domcontentloaded for heavy web apps to prevent hanging
                       page.goto(target_url, timeout=45000, wait_until="domcontentloaded")
                       
-                      # Buffer time: Explicitly wait for Streamlit WebSocket/React layout to finish rendering
                       print("Waiting for Streamlit components to render...")
-                      time.sleep(8)
+                      time.sleep(10)
 
-                      # Simulate human reading dwell time
                       dwell_time = random.uniform(5.0, 15.0)
                       print(f"Simulating user reading dwell time for {dwell_time:.2f} seconds...")
                       time.sleep(dwell_time)
 
-                      # Take viewport-only screenshot (< 2MB, typically ~200-400 KB)
-                      screenshot_path = f"streamlit_screenshot_{index}.png"
+                      # Save directly using absolute path to guarantee file discovery
+                      screenshot_filename = f"streamlit_screenshot_{index}.png"
+                      screenshot_path = os.path.join(workspace_dir, screenshot_filename)
+                      
                       page.screenshot(path=screenshot_path, full_page=False)
                       print(f"Screenshot successfully saved to {screenshot_path}")
 
