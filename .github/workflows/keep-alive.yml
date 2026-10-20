@@ -2,8 +2,8 @@ name: Streamlit Keep-Alive
 
 on:
   schedule:
-    # Runs every 5 hours
-    - cron: '0 */5 * * *'
+    # Irregular schedule with varying intervals (e.g., 4h, 5h, 7h gaps) to avoid linear bot patterns
+    - cron: '0 2,7,11,16,21 * * *'
   workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
 
 jobs:
@@ -18,28 +18,28 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Send human-like ping to Streamlit
+      - name: Simulate Human Browser Session
         run: |
           python -c '
           import urllib.request
           import random
           import time
 
-          # Add a random initial jitter between 1 to 45 seconds to break rigid patterns
-          delay = random.randint(1, 45)
-          print(f"Waiting {delay} seconds before sending request...")
+          # Random startup jitter (10 to 90 seconds) to avoid exact minute triggers
+          delay = random.randint(10, 90)
+          print(f"Browser launching in {delay} seconds...")
           time.sleep(delay)
 
-          # List of target links to cycle through randomly
+          # Pool of links to select from randomly
           urls = [
               "https://st-auto-application-np4xyno3ptrqqq7ebjgpjy.streamlit.app/",
               "https://st-auto-application-np4xyno3ptrqqq7ebjgpjy.streamlit.app/?state=XFXO1GxvpHi0UO4VIaVCC4dV4cZFQC&iss=https://accounts.google.com&code=4/0AXlqoi5laLudYdEYJJi2olXaphRvXW6DT5CZyly1cfeadZXMnaTOzFJ-kXU1SYmO4ZTTwA&scope=https://www.googleapis.com/auth/drive.file%20https://www.googleapis.com/auth/spreadsheets"
           ]
           
-          url = random.choice(urls)
-          print(f"Targeting URL: {url}")
+          target_url = random.choice(urls)
+          print(f"Navigating to target: {target_url}")
 
-          # Rotate realistic browser User-Agents to avoid standard bot detection signatures
+          # Realistic browser User-Agent strings
           user_agents = [
               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
               "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15",
@@ -47,20 +47,35 @@ jobs:
               "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
           ]
           
+          # Headers mimicking a genuine browser navigation request
           headers = {
               "User-Agent": random.choice(user_agents),
               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
               "Accept-Language": "en-US,en;q=0.5",
               "Accept-Encoding": "gzip, deflate, br",
               "Connection": "keep-alive",
-              "Upgrade-Insecure-Requests": "1"
+              "Upgrade-Insecure-Requests": "1",
+              "Sec-Fetch-Dest": "document",
+              "Sec-Fetch-Mode": "navigate",
+              "Sec-Fetch-Site": "none",
+              "Sec-Fetch-User": "?1"
           }
 
-          req = urllib.request.Request(url, headers=headers)
+          req = urllib.request.Request(target_url, headers=headers)
 
           try:
               with urllib.request.urlopen(req, timeout=30) as response:
-                  print(f"Successfully pinged! Status code: {response.status}")
+                  print(f"Connection successful. Status code: {response.status}")
+                  
+                  # Read full content to simulate downloading/rendering the HTML page
+                  page_content = response.read()
+                  print(f"Loaded page payload: {len(page_content)} bytes.")
+
+                  # Simulate human dwell time (staying on the page for 4 to 15 seconds)
+                  dwell_time = random.uniform(4.0, 15.0)
+                  print(f"Simulating user reading dwell time for {dwell_time:.2f} seconds...")
+                  time.sleep(dwell_time)
+                  print("Session closed naturally.")
           except Exception as e:
-              print(f"Ping failed with error: {e}")
+              print(f"Session encountered an error: {e}")
           '
