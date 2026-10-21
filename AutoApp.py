@@ -9,6 +9,9 @@ import os
 import pickle
 from urllib.parse import urlencode
 from PIL import Image
+import subprocess
+import tempfile
+import sys
 
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
@@ -166,14 +169,12 @@ def compress_file_if_needed(file_bytes, filename, max_size_mb=2.0):
             img.save(output, format="JPEG", quality=quality, optimize=True)
             compressed_bytes = output.getvalue()
             
-            # Reduce quality further if needed
             while len(compressed_bytes) > max_bytes and quality > 20:
                 quality -= 15
                 output = BytesIO()
                 img.save(output, format="JPEG", quality=quality, optimize=True)
                 compressed_bytes = output.getvalue()
             
-            # Resize image if still over limit
             if len(compressed_bytes) > max_bytes:
                 img.thumbnail((img.width // 2, img.height // 2))
                 output = BytesIO()
@@ -822,7 +823,49 @@ if nav_selection == "1. Main Page":
             with col_g1:
                 st.button("Bayar Fi Proses & Hantar", key="g_btn_bayar")
             with col_g2:
-                st.button("Simpan Draf", key="g_btn_draf")
+                if st.button("Simpan Draf", key="g_btn_draf"):
+                    st.info("Saving draft and triggering OAS form auto-fill...")
+                    
+                    # Package inputs and files into payload JSON for login.py execution
+                    uploaded_file_paths = {}
+                    temp_dir = tempfile.gettempdir()
+                    for k, v in st.session_state.items():
+                        if hasattr(v, "read") and hasattr(v, "name"):
+                            file_path = os.path.join(temp_dir, v.name)
+                            with open(file_path, "wb") as f:
+                                f.write(v.getvalue())
+                            uploaded_file_paths[k] = file_path
+
+                    draft_payload = {
+                        "project_title": st.session_state.get("project_title", ""),
+                        "location": st.session_state.get("location", ""),
+                        "bahagian_a_info": st.session_state.get("a_info", ""),
+                        "b_jumlah_keupayaan": st.session_state.get("b_jumlah_keupayaan", ""),
+                        "b_kehendak_maksimum": st.session_state.get("b_kehendak_maksimum", ""),
+                        "b_bilangan_incomers": st.session_state.get("b_bilangan_incomers", ""),
+                        "b_nama_pencawang": st.session_state.get("b_nama_pencawang", ""),
+                        "b_voltan_punca_bekalan": st.session_state.get("b_voltan_punca_bekalan", ""),
+                        "b_voltan_pengagihan": st.session_state.get("b_voltan_pengagihan", ""),
+                        "bahagian_d_info": st.session_state.get("d_info", ""),
+                        "e_no_lot": st.session_state.get("e_no_lot", ""),
+                        "e_mukim": st.session_state.get("e_mukim", ""),
+                        "e_daerah": st.session_state.get("e_daerah", ""),
+                        "e_poskod": st.session_state.get("e_poskod", ""),
+                        "g_nama": st.session_state.get("g_nama", ""),
+                        "g_no_perakuan": st.session_state.get("g_no_perakuan", ""),
+                        "g_alamat": st.session_state.get("g_alamat", ""),
+                        "uploaded_files": uploaded_file_paths
+                    }
+
+                    with open("draft_payload.json", "w", encoding="utf-8") as f:
+                        json.dump(draft_payload, f, indent=4)
+
+                    try:
+                        subprocess.Popen([sys.executable, "login.py"])
+                        st.success("Draft saved & automation script triggered successfully!")
+                    except Exception as e:
+                        st.error(f"Error starting automation script: {e}")
+
             with col_g3:
                 st.button("Hapus Draf", key="g_btn_hapus_draf")
 
@@ -842,11 +885,8 @@ if nav_selection == "1. Main Page":
                 else:
                     try:
                         timestamp = datetime.now(MALAYSIA_ZONE).strftime("%Y-%m-%d %H:%M:%S")
-
-                        # Automatically create or use the dedicated project subfolder inside FOLDER_ID
                         project_folder_id = get_or_create_project_folder(project_title, FOLDER_ID)
 
-                        # Process selected 'Sistem Agihan' options
                         sistem_agihan_selected = []
                         if sistem_agihan_pendawaian: sistem_agihan_selected.append("Pendawaian dalaman")
                         if sistem_agihan_kabel: sistem_agihan_selected.append("Kabel bawah tanah")
@@ -860,7 +900,6 @@ if nav_selection == "1. Main Page":
 
                         pembekalan_json = json.dumps(edited_pembekalan_df.to_dict(orient="records"))
 
-                        # Process Bahagian C Uploads & Checklist (stored in project folder)
                         bahagian_c_summary = {}
                         for key_doc, doc_val in doc_c_data.items():
                             file_obj = doc_val["file"]
@@ -878,7 +917,6 @@ if nav_selection == "1. Main Page":
                                 "extra": doc_val.get("extra", "")
                             }
 
-                        # Process competent person surat pelantikan (stored in project folder)
                         surat_jurutera_link = "Tiada"
                         if f_surat_jurutera:
                             content = f_surat_jurutera.getvalue() if hasattr(f_surat_jurutera, "getvalue") else f_surat_jurutera.read()
@@ -909,7 +947,6 @@ if nav_selection == "1. Main Page":
                         c_checklist_json = json.dumps(bahagian_c_summary)
                         c_competent_json = json.dumps(bahagian_c_competent)
 
-                        # Process Bahagian E Data
                         kat_penggunaan_list = []
                         if e_kat_pengilangan: kat_penggunaan_list.append("Pengilangan / Industri")
                         if e_kat_perladangan: kat_penggunaan_list.append("Perladangan")
@@ -942,7 +979,6 @@ if nav_selection == "1. Main Page":
                         }
                         bahagian_e_json = json.dumps(bahagian_e_data)
 
-                        # Process Bahagian F Data
                         bahagian_f_data = {
                             "pengakuan_maklumat_benar": f_check1,
                             "pengakuan_lantik_orang_kompeten": f_check2,
@@ -950,7 +986,6 @@ if nav_selection == "1. Main Page":
                         }
                         bahagian_f_json = json.dumps(bahagian_f_data)
 
-                        # Process Bahagian G Data
                         bahagian_g_data = {
                             "aktiviti_pengesahan": g_aktiviti_option,
                             "nama": g_nama,
