@@ -30,7 +30,7 @@ jobs:
           MPSEPANG_USER: ${{ secrets.MPSEPANG_USER }}
           MPSEPANG_PASSWORD: ${{ secrets.MPSEPANG_PASSWORD }}
         run: |
-          python MP Sepang Auto Login.py
+          python login_mpsepang.py
 
       - name: Upload Captured Artifacts
         if: always()
