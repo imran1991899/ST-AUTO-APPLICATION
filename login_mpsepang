@@ -52,21 +52,14 @@ def login_mpsepang():
         print("Navigating to MP Sepang login page...")
         page.goto("https://ekl.mpsepang.gov.my/sso/Default.aspx", timeout=60000)
 
-        # 1. Fill No Kad Pengenalan / Passport and Katalaluan
+        # 1. Fill No Kad Pengenalan / Passport and Katalaluan directly using input types
         print("Filling No Kad Pengenalan / Passport and Katalaluan...")
-        try:
-            page.get_by_text("No Kad Pengenalan", exact=False).locator("..").locator("input").fill(user_id)
-        except Exception:
-            page.locator("input[type='text']").first.fill(user_id)
+        page.locator("input[type='text']").first.fill(user_id)
+        page.locator("input[type='password']").first.fill(password)
 
-        try:
-            page.get_by_text("Katalaluan", exact=False).locator("..").locator("input").fill(password)
-        except Exception:
-            page.locator("input[type='password']").first.fill(password)
-
-        # 2. Click Log Masuk
-        print("Clicking 'Log Masuk'...")
-        login_btn = page.locator("input[value*='Log Masuk'], button:has-text('Log Masuk'), input[type='submit']").first
+        # 2. Click LOG MASUK button
+        print("Clicking 'LOG MASUK'...")
+        login_btn = page.locator("button:has-text('LOG MASUK'), input[value*='LOG MASUK'], input[type='submit'], a:has-text('LOG MASUK')").first
         login_btn.click(force=True)
 
         page.wait_for_load_state("domcontentloaded")
