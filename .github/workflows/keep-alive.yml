@@ -30,14 +30,15 @@ jobs:
           import time
           from playwright.sync_api import sync_playwright
 
-          should_run = random.choices([True, False], weights=[45, 55], k=1)[0]
+          # Increased execution probability from 45% to 80% to prevent consecutive skips
+          should_run = random.choices([True, False], weights=[80, 20], k=1)[0]
           if not should_run:
               print("Random decision: Skipping this time slot to maintain an unpredictable pattern.")
               exit(0)
 
           print("Random decision: Proceeding with session execution.")
 
-          delay = random.randint(10, 180)
+          delay = random.randint(10, 60)
           print(f"Browser launching in {delay} seconds...")
           time.sleep(delay)
 
@@ -59,14 +60,28 @@ jobs:
                   screenshot_path = os.path.join(workspace_dir, screenshot_filename)
                   
                   try:
-                      # Load page with a more forgiving timeout and load state
-                      page.goto(target_url, timeout=60000, wait_until="commit")
+                      # Load page and wait for DOM content to be fully loaded
+                      page.goto(target_url, timeout=60000, wait_until="domcontentloaded")
                       
-                      print("Waiting for Streamlit app to initialize...")
-                      time.sleep(12)
-
-                      dwell_time = random.uniform(5.0, 15.0)
-                      print(f"Simulating user reading dwell time for {dwell_time:.2f} seconds...")
+                      print("Waiting for Streamlit app container and WebSocket connection...")
+                      # Wait explicitly for the Streamlit app container to render
+                      page.wait_for_selector("[data-testid=\"stAppViewContainer\"]", timeout=45000)
+                      
+                      print("Simulating human activity (mouse movement, clicks, and scrolling)...")
+                      # Simulate realistic mouse movements and interactions
+                      page.mouse.move(200, 200)
+                      page.mouse.move(500, 400, steps=15)
+                      page.mouse.down()
+                      page.mouse.up()
+                      
+                      # Scroll down and back up to trigger UI rendering events
+                      page.mouse.wheel(0, 400)
+                      time.sleep(3)
+                      page.mouse.wheel(0, -400)
+                      
+                      # Extended dwell time to keep the WebSocket session active longer
+                      dwell_time = random.uniform(25.0, 45.0)
+                      print(f"Holding active session for {dwell_time:.2f} seconds...")
                       time.sleep(dwell_time)
 
                       page.screenshot(path=screenshot_path, full_page=False)
@@ -74,7 +89,6 @@ jobs:
 
                   except Exception as e:
                       print(f"Encountered issue on link {index}: {e}")
-                      # Fallback: take a screenshot of whatever state the browser reached so the artifact is never empty
                       try:
                           page.screenshot(path=screenshot_path, full_page=False)
                           print(f"Fallback screenshot saved to {screenshot_path}")
