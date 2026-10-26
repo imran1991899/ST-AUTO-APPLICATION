@@ -489,11 +489,11 @@ for key, default in defaults.items():
 st.sidebar.title("Navigation Menu")
 nav_selection = st.sidebar.radio(
     "Go to",
-    ["1. Main Page", "2. Detail Application", "3. Information"]
+    ["1. ST Application", "2. Business License PBT", "3. Information"]
 )
 
-# --------- 1. MAIN PAGE ---------
-if nav_selection == "1. Main Page":
+# --------- 1. ST Application ---------
+if nav_selection == "1. ST Application":
     st.title("Application Portal ST")
     
     col1, col2 = st.columns(2)
@@ -1683,8 +1683,8 @@ if nav_selection == "1. Main Page":
             st.error(f"Could not load existing applications: {e}")
 
 # --------- 2. DETAIL APPLICATION ---------
-elif nav_selection == "2. Detail Application":
-    st.title("Detail Application")
+elif nav_selection == "2. Business License PBT":
+    st.title("Business License PBT")
     st.info("This section is reserved for future detailed application management and review tools.")
 
 # --------- 3. INFORMATION ---------
