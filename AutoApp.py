@@ -299,8 +299,6 @@ defaults = {
     "no_lot": "",
     "hak_milik": "",
     "kedudukan_premis": "",
-    "gps_lat": "",
-    "gps_lon": "",
     "description": "",
     "tarikh_mulatugas_count": 1,
     "evcs_models": [
@@ -313,6 +311,8 @@ defaults = {
             "connector_type": "",
             "output_cable_size": "",
             "no_of_charging_bays": "",
+            "gps_lat": "",
+            "gps_lon": "",
             "is_minimized": False
         }
     ]
@@ -476,6 +476,8 @@ if nav_selection == "1. Main Page":
                         "connector_type": "",
                         "output_cable_size": "",
                         "no_of_charging_bays": "",
+                        "gps_lat": "",
+                        "gps_lon": "",
                         "is_minimized": False
                     })
                     st.rerun()
@@ -501,6 +503,7 @@ if nav_selection == "1. Main Page":
                         st.write(f"**Rated Input Power:** {model['rated_input_power'] or '-'}")
                         st.write(f"**Mode of Charging:** {model['mode_of_charging'] or '-'}")
                         st.write(f"**Output Cable Size:** {model['output_cable_size'] or '-'}")
+                        st.write(f"**GPS Coordinates:** {model.get('gps_lat', '-')}")
                     with c_min2:
                         st.write(f"**No. of Units:** {model['no_of_units'] or '-'}")
                         st.write(f"**Max. Charging Power:** {model['max_charging_power'] or '-'}")
@@ -689,92 +692,94 @@ if nav_selection == "1. Main Page":
                                 st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
                                 st.rerun()
 
+                # GPS Coordinate Latitude Longitude & Map Dialog (Integrated inside each model form)
+                st.markdown("GPS Coordinate Latitude Longitude")
+                col_gps_in, col_gps_btn = st.columns([4, 1])
+                with col_gps_in:
+                    gps_lat = st.text_input("Latitude Longitude", value=model.get("gps_lat", ""), key=f"input_gps_lat_{idx}", placeholder="2.800693, 101.686073")
+                    st.session_state.evcs_models[idx]["gps_lat"] = gps_lat
+                with col_gps_btn:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    @st.dialog(f"🗺️ Select Location on Map - Model {idx + 1}", width="large")
+                    def gps_map_dialog(m_idx):
+                        st.markdown("Search a location or click on the map to pin coordinates:", unsafe_allow_html=True)
+                        
+                        import urllib.request
+                        import urllib.parse
+                        import json
+
+                        search_query = st.text_input("🔍 Search location (e.g. Nilai, Sepang, KLCC)", key=f"map_search_input_{m_idx}")
+                        
+                        target_lat = None
+                        target_lon = None
+                        
+                        if search_query and len(search_query.strip()) > 2:
+                            try:
+                                encoded_q = urllib.parse.quote(search_query)
+                                url = f"https://nominatim.openstreetmap.org/search?q={encoded_q}&format=json&limit=5"
+                                req = urllib.request.Request(url, headers={'User-Agent': 'StreamlitApp/1.0'})
+                                with urllib.request.urlopen(req) as response:
+                                    results = json.loads(response.read().decode())
+                                    if results:
+                                        options = {res['display_name']: (float(res['lat']), float(res['lon'])) for res in results}
+                                        selected_place = st.selectbox("📍 Select suggestion:", list(options.keys()), key=f"map_search_suggestions_{m_idx}")
+                                        if selected_place:
+                                            target_lat, target_lon = options[selected_place]
+                            except Exception as e:
+                                st.error(f"Search error: {e}")
+
+                        try:
+                            import folium
+                            from streamlit_folium import st_folium
+                            
+                            current_val = st.session_state.evcs_models[m_idx].get("gps_lat", "2.800693")
+                            try:
+                                init_lat = target_lat if target_lat is not None else float(current_val.split(',')[0].strip() if ',' in current_val else current_val or 2.800693)
+                            except:
+                                init_lat = 2.800693
+                            current_lon = st.session_state.evcs_models[m_idx].get("gps_lon", "101.686073")
+                            try:
+                                init_lon = target_lon if target_lon is not None else float(current_lon or 101.686073)
+                            except:
+                                init_lon = 101.686073
+
+                            m = folium.Map(location=[init_lat, init_lon], zoom_start=14 if target_lat else 13)
+                            folium.Marker([init_lat, init_lon], popup="Selected Location", tooltip="Pinned Location").add_to(m)
+                            m.add_child(folium.LatLngPopup())
+                            
+                            map_data = st_folium(m, use_container_width=True, height=500, key=f"map_popup_interactive_{m_idx}")
+                            
+                            if map_data and map_data.get("last_clicked"):
+                                clicked_lat = map_data["last_clicked"]["lat"]
+                                clicked_lon = map_data["last_clicked"]["lng"]
+                                coord_str = f"{clicked_lat}, {clicked_lon}"
+                                st.session_state.evcs_models[m_idx]["gps_lat"] = coord_str
+                                st.session_state.evcs_models[m_idx]["gps_lon"] = str(clicked_lon)
+                                st.session_state[f"input_gps_lat_{m_idx}"] = coord_str
+                                st.success(f"Saved Coordinates: {coord_str}")
+                                time.sleep(0.5)
+                                st.rerun()
+                        except Exception as e:
+                            st.warning(f"Interactive map requires folium and streamlit-folium. Error: {e}")
+                            dlg_lat = st.text_input("Latitude", value="2.800693", key=f"dlg_lat_{m_idx}")
+                            dlg_lon = st.text_input("Longitude", value="101.686073", key=f"dlg_lon_{m_idx}")
+                            if st.button("✅ Save Coordinates", key=f"save_coords_{m_idx}", use_container_width=True):
+                                coord_str = f"{dlg_lat}, {dlg_lon}"
+                                st.session_state.evcs_models[m_idx]["gps_lat"] = coord_str
+                                st.session_state.evcs_models[m_idx]["gps_lon"] = dlg_lon
+                                st.session_state[f"input_gps_lat_{m_idx}"] = coord_str
+                                st.success("Coordinates saved!")
+                                time.sleep(0.5)
+                                st.rerun()
+
+                        if st.button("✅ Close / Done", key=f"close_dialog_{m_idx}", use_container_width=True):
+                            st.rerun()
+
+                    if st.button("🗺️ Map", key=f"btn_open_map_{idx}"):
+                        gps_map_dialog(idx)
+                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693, 101.686073</p>", unsafe_allow_html=True)
+
             st.markdown("---")
-
-        # GPS Coordinate Latitude Longitude & Map Dialog
-        st.markdown("GPS Coordinate Latitude Longitude")
-        col_gps_in, col_gps_btn = st.columns([4, 1])
-        with col_gps_in:
-            gps_lat = st.text_input("Latitude Longitude", value=st.session_state.gps_lat, key="input_gps_lat", placeholder="2.800693, 101.686073")
-            st.session_state.gps_lat = gps_lat
-        with col_gps_btn:
-            st.markdown("<br>", unsafe_allow_html=True)
-            @st.dialog("🗺️ Select Location on Map", width="large")
-            def gps_map_dialog():
-                st.markdown("Search a location or click on the map to pin coordinates:", unsafe_allow_html=True)
-                
-                import urllib.request
-                import urllib.parse
-                import json
-
-                search_query = st.text_input("🔍 Search location (e.g. Nilai, Sepang, KLCC)", key="map_search_input")
-                
-                target_lat = None
-                target_lon = None
-                
-                if search_query and len(search_query.strip()) > 2:
-                    try:
-                        encoded_q = urllib.parse.quote(search_query)
-                        url = f"https://nominatim.openstreetmap.org/search?q={encoded_q}&format=json&limit=5"
-                        req = urllib.request.Request(url, headers={'User-Agent': 'StreamlitApp/1.0'})
-                        with urllib.request.urlopen(req) as response:
-                            results = json.loads(response.read().decode())
-                            if results:
-                                options = {res['display_name']: (float(res['lat']), float(res['lon'])) for res in results}
-                                selected_place = st.selectbox("📍 Select suggestion:", list(options.keys()), key="map_search_suggestions")
-                                if selected_place:
-                                    target_lat, target_lon = options[selected_place]
-                    except Exception as e:
-                        st.error(f"Search error: {e}")
-
-                try:
-                    import folium
-                    from streamlit_folium import st_folium
-                    
-                    try:
-                        init_lat = target_lat if target_lat is not None else float(st.session_state.get("gps_lat", "2.800693").split(',')[0].strip() if ',' in st.session_state.get("gps_lat", "2.800693") else st.session_state.get("gps_lat", "2.800693") or 2.800693)
-                    except:
-                        init_lat = 2.800693
-                    try:
-                        init_lon = target_lon if target_lon is not None else float(st.session_state.get("gps_lon", "101.686073") or 101.686073)
-                    except:
-                        init_lon = 101.686073
-
-                    m = folium.Map(location=[init_lat, init_lon], zoom_start=14 if target_lat else 13)
-                    folium.Marker([init_lat, init_lon], popup="Selected Location", tooltip="Pinned Location").add_to(m)
-                    m.add_child(folium.LatLngPopup())
-                    
-                    map_data = st_folium(m, use_container_width=True, height=500, key="map_popup_interactive")
-                    
-                    if map_data and map_data.get("last_clicked"):
-                        clicked_lat = map_data["last_clicked"]["lat"]
-                        clicked_lon = map_data["last_clicked"]["lng"]
-                        coord_str = f"{clicked_lat}, {clicked_lon}"
-                        st.session_state.gps_lat = coord_str
-                        st.session_state.gps_lon = str(clicked_lon)
-                        st.session_state.input_gps_lat = coord_str
-                        st.success(f"Saved Coordinates: {coord_str}")
-                        time.sleep(0.5)
-                        st.rerun()
-                except Exception as e:
-                    st.warning(f"Interactive map requires folium and streamlit-folium. Error: {e}")
-                    dlg_lat = st.text_input("Latitude", value="2.800693")
-                    dlg_lon = st.text_input("Longitude", value="101.686073")
-                    if st.button("✅ Save Coordinates", use_container_width=True):
-                        coord_str = f"{dlg_lat}, {dlg_lon}"
-                        st.session_state.gps_lat = coord_str
-                        st.session_state.gps_lon = dlg_lon
-                        st.session_state.input_gps_lat = coord_str
-                        st.success("Coordinates saved!")
-                        time.sleep(0.5)
-                        st.rerun()
-
-                if st.button("✅ Close / Done", use_container_width=True):
-                    st.rerun()
-
-            if st.button("🗺️ Map", key="btn_open_map"):
-                gps_map_dialog()
-        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693, 101.686073</p>", unsafe_allow_html=True)
 
         st.markdown("---")
         st.subheader("📋 Application Sections (Bahagian A - G)")
@@ -1357,7 +1362,7 @@ if nav_selection == "1. Main Page":
                             primary_model.get("rated_input_power", ""), primary_model.get("max_charging_power", ""),
                             primary_model.get("mode_of_charging", ""), primary_model.get("connector_type", ""), 
                             primary_model.get("output_cable_size", ""), primary_model.get("no_of_charging_bays", ""),
-                            gps_lat, gps_lon, description,
+                            primary_model.get("gps_lat", ""), primary_model.get("gps_lon", ""), description,
                             evcs_models_json,
                             c_checklist_json, c_competent_json,
                             bahagian_e_json,
@@ -1392,8 +1397,6 @@ if nav_selection == "1. Main Page":
                             "no_lot": "",
                             "hak_milik": "",
                             "kedudukan_premis": "",
-                            "gps_lat": "",
-                            "gps_lon": "",
                             "description": "",
                             "tarikh_mulatugas_count": 1,
                             "evcs_models": [
@@ -1406,6 +1409,8 @@ if nav_selection == "1. Main Page":
                                     "connector_type": "",
                                     "output_cable_size": "",
                                     "no_of_charging_bays": "",
+                                    "gps_lat": "",
+                                    "gps_lon": "",
                                     "is_minimized": False
                                 }
                             ]
