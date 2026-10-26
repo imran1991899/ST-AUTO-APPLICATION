@@ -413,7 +413,7 @@ if nav_selection == "1. Main Page":
 
         with col_img1:
             with st.container(border=True):
-                ic1, ic2, ic3 = st.columns([1.7, 2, 1])
+                ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
                     if os.path.exists("DC_120.png"):
                         st.image("DC_120.png", width=90)
@@ -425,7 +425,7 @@ if nav_selection == "1. Main Page":
 
         with col_img2:
             with st.container(border=True):
-                ic1, ic2, ic3 = st.columns([1.7, 2, 1])
+                ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
                     if os.path.exists("DC_240.png"):
                         st.image("DC_240.png", width=90)
@@ -437,7 +437,7 @@ if nav_selection == "1. Main Page":
 
         with col_img3:
             with st.container(border=True):
-                ic1, ic2, ic3 = st.columns([1.7, 2, 1])
+                ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
                     if os.path.exists("add.png"):
                         st.image("add.png", width=90)
@@ -489,7 +489,7 @@ if nav_selection == "1. Main Page":
             output_cable_size = st.text_input("Output Cable Size / Type (Charging Cable)", value=st.session_state.output_cable_size)
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: CSS2-5M-250A cable size 2 × 70 mm²+25mm²</p>", unsafe_allow_html=True)
 
-            # GPS Coordinate Latitude & Longitude with Interactive Map Picker Dialog
+            # GPS Coordinate Latitude & Longitude with Interactive Map Picker Dialog & Location Search Suggestions
             st.markdown("GPS Coordinate Latitude Longitude")
             col_gps_in, col_gps_btn = st.columns([4, 1])
             with col_gps_in:
@@ -497,27 +497,53 @@ if nav_selection == "1. Main Page":
                 st.session_state.gps_lat = gps_lat
             with col_gps_btn:
                 st.markdown("<br>", unsafe_allow_html=True)
-                @st.dialog("🗺️ Select Location on Map")
+                @st.dialog("🗺️ Select Location on Map", width="large")
                 def gps_map_dialog():
-                    st.markdown("Click on the map to pin a location and automatically save coordinates:", unsafe_allow_html=True)
+                    st.markdown("Search a location or click on the map to pin coordinates:", unsafe_allow_html=True)
+                    
+                    # Location search and suggestion logic using Nominatim API
+                    import urllib.request
+                    import urllib.parse
+                    import json
+
+                    search_query = st.text_input("🔍 Search location (e.g. Nilai, Sepang, KLCC)", key="map_search_input")
+                    
+                    target_lat = None
+                    target_lon = None
+                    
+                    if search_query and len(search_query.strip()) > 2:
+                        try:
+                            encoded_q = urllib.parse.quote(search_query)
+                            url = f"https://nominatim.openstreetmap.org/search?q={encoded_q}&format=json&limit=5"
+                            req = urllib.request.Request(url, headers={'User-Agent': 'StreamlitApp/1.0'})
+                            with urllib.request.urlopen(req) as response:
+                                results = json.loads(response.read().decode())
+                                if results:
+                                    options = {res['display_name']: (float(res['lat']), float(res['lon'])) for res in results}
+                                    selected_place = st.selectbox("📍 Select suggestion:", list(options.keys()), key="map_search_suggestions")
+                                    if selected_place:
+                                        target_lat, target_lon = options[selected_place]
+                        except Exception as e:
+                            st.error(f"Search error: {e}")
+
                     try:
                         import folium
                         from streamlit_folium import st_folium
                         
                         try:
-                            init_lat = float(st.session_state.get("gps_lat", "2.800693") or 2.800693)
+                            init_lat = target_lat if target_lat is not None else float(st.session_state.get("gps_lat", "2.800693") or 2.800693)
                         except:
                             init_lat = 2.800693
                         try:
-                            init_lon = float(st.session_state.get("gps_lon", "101.686073") or 101.686073)
+                            init_lon = target_lon if target_lon is not None else float(st.session_state.get("gps_lon", "101.686073") or 101.686073)
                         except:
                             init_lon = 101.686073
 
-                        m = folium.Map(location=[init_lat, init_lon], zoom_start=13)
+                        m = folium.Map(location=[init_lat, init_lon], zoom_start=14 if target_lat else 13)
                         folium.Marker([init_lat, init_lon], popup="Selected Location", tooltip="Pinned Location").add_to(m)
                         m.add_child(folium.LatLngPopup())
                         
-                        map_data = st_folium(m, width=500, height=350, key="map_popup_interactive")
+                        map_data = st_folium(m, width=700, height=500, key="map_popup_interactive")
                         
                         if map_data and map_data.get("last_clicked"):
                             clicked_lat = map_data["last_clicked"]["lat"]
