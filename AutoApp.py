@@ -375,13 +375,13 @@ if nav_selection == "1. Main Page":
             st.markdown("<div class='evc-card'>", unsafe_allow_html=True)
             ic1, ic2, ic3 = st.columns([1, 2, 1])
             with ic2:
-                if os.path.exists("imgEVC/DC_120.png"):
+                if os.path.exists("DC_120.png"):
                     if st.button("🖼️", key="img_btn_120", help="Click to select Guorui 120kW"):
                         select_model_120()
                         st.rerun()
-                    st.image("imgEVC/DC_120.png", width=90)
+                    st.image("DC_120.png", width=90)
                 else:
-                    st.warning("imgEVC/DC_120.png not found")
+                    st.warning("DC_120.png not found")
             st.markdown("</div>", unsafe_allow_html=True)
             if st.button("Guorui / GRD08-120SDE", use_container_width=True, key="btn_120"):
                 select_model_120()
@@ -391,13 +391,13 @@ if nav_selection == "1. Main Page":
             st.markdown("<div class='evc-card'>", unsafe_allow_html=True)
             ic1, ic2, ic3 = st.columns([1, 2, 1])
             with ic2:
-                if os.path.exists("imgEVC/DC_240.png"):
+                if os.path.exists("DC_240.png"):
                     if st.button("🖼️", key="img_btn_240", help="Click to select Guorui 240kW"):
                         select_model_240()
                         st.rerun()
-                    st.image("imgEVC/DC_240.png", width=90)
+                    st.image("DC_240.png", width=90)
                 else:
-                    st.warning("imgEVC/DC_240.png not found")
+                    st.warning("DC_240.png not found")
             st.markdown("</div>", unsafe_allow_html=True)
             if st.button("Guorui / GRD08-240SDE", use_container_width=True, key="btn_240"):
                 select_model_240()
@@ -407,13 +407,13 @@ if nav_selection == "1. Main Page":
             st.markdown("<div class='evc-card'>", unsafe_allow_html=True)
             ic1, ic2, ic3 = st.columns([1, 2, 1])
             with ic2:
-                if os.path.exists("imgEVC/add.png"):
+                if os.path.exists("add.png"):
                     if st.button("🖼️", key="img_btn_add", help="Click to add other model"):
                         select_model_add()
                         st.rerun()
-                    st.image("imgEVC/add.png", width=90)
+                    st.image("add.png", width=90)
                 else:
-                    st.warning("imgEVC/add.png not found")
+                    st.warning("add.png not found")
             st.markdown("</div>", unsafe_allow_html=True)
             if st.button("+ Add Other Model", use_container_width=True, key="btn_add"):
                 select_model_add()
