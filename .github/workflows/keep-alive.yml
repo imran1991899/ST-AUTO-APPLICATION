@@ -2,7 +2,7 @@ name: Streamlit Keep-Alive
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 */3 * * *'
   workflow_dispatch:
 
 jobs:
@@ -30,15 +30,15 @@ jobs:
           import time
           from playwright.sync_api import sync_playwright
 
-          # Increased execution probability from 45% to 80% to prevent consecutive skips
-          should_run = random.choices([True, False], weights=[80, 20], k=1)[0]
-          if not should_run:
-              print("Random decision: Skipping this time slot to maintain an unpredictable pattern.")
-              exit(0)
+          # Randomly choose between a 3-hour or 4-hour interval (never exceeds 4 hours)
+          target_interval = random.choice([3, 4])
+          if target_interval == 4:
+              print("Random decision: Delaying by 1 hour to make this a 4-hour interval.")
+              time.sleep(3600)
+          else:
+              print("Random decision: Proceeding with 3-hour interval.")
 
-          print("Random decision: Proceeding with session execution.")
-
-          delay = random.randint(10, 60)
+          delay = random.randint(10, 180)
           print(f"Browser launching in {delay} seconds...")
           time.sleep(delay)
 
@@ -60,26 +60,21 @@ jobs:
                   screenshot_path = os.path.join(workspace_dir, screenshot_filename)
                   
                   try:
-                      # Load page and wait for DOM content to be fully loaded
                       page.goto(target_url, timeout=60000, wait_until="domcontentloaded")
                       
                       print("Waiting for Streamlit app container and WebSocket connection...")
-                      # Wait explicitly for the Streamlit app container to render
                       page.wait_for_selector("[data-testid=\"stAppViewContainer\"]", timeout=45000)
                       
                       print("Simulating human activity (mouse movement, clicks, and scrolling)...")
-                      # Simulate realistic mouse movements and interactions
                       page.mouse.move(200, 200)
                       page.mouse.move(500, 400, steps=15)
                       page.mouse.down()
                       page.mouse.up()
                       
-                      # Scroll down and back up to trigger UI rendering events
                       page.mouse.wheel(0, 400)
                       time.sleep(3)
                       page.mouse.wheel(0, -400)
                       
-                      # Extended dwell time to keep the WebSocket session active longer
                       dwell_time = random.uniform(25.0, 45.0)
                       print(f"Holding active session for {dwell_time:.2f} seconds...")
                       time.sleep(dwell_time)
