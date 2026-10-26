@@ -14,3 +14,4 @@ gspread
 pytz
 folium
 streamlit-folium
+reportlab
