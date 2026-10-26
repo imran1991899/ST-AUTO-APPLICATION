@@ -480,7 +480,7 @@ if nav_selection == "1. Main Page":
                     })
                     st.rerun()
 
-        #st.markdown("---")
+        st.markdown("---")
 
         # Function to delete a model type safely
         def remove_evcs_model(model_idx):
@@ -689,7 +689,7 @@ if nav_selection == "1. Main Page":
                                 st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
                                 st.rerun()
 
-            ##st.markdown("---")
+            st.markdown("---")
 
         # GPS Coordinate Latitude Longitude & Map Dialog
         st.markdown("GPS Coordinate Latitude Longitude")
