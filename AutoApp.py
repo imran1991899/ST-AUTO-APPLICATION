@@ -379,7 +379,7 @@ if nav_selection == "1. Main Page":
 
         with col_img1:
             with st.container(border=True):
-                ic1, ic2, ic3 = st.columns([1, 2, 1])
+                ic1, ic2, ic3 = st.columns([1.7, 2, 1])
                 with ic2:
                     if os.path.exists("DC_120.png"):
                         st.image("DC_120.png", width=90)
@@ -391,7 +391,7 @@ if nav_selection == "1. Main Page":
 
         with col_img2:
             with st.container(border=True):
-                ic1, ic2, ic3 = st.columns([1, 2, 1])
+                ic1, ic2, ic3 = st.columns([1.7, 2, 1])
                 with ic2:
                     if os.path.exists("DC_240.png"):
                         st.image("DC_240.png", width=90)
@@ -403,7 +403,7 @@ if nav_selection == "1. Main Page":
 
         with col_img3:
             with st.container(border=True):
-                ic1, ic2, ic3 = st.columns([1, 2, 1])
+                ic1, ic2, ic3 = st.columns([1.7, 2, 1])
                 with ic2:
                     if os.path.exists("add.png"):
                         st.image("add.png", width=90)
