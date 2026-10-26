@@ -497,11 +497,11 @@ if nav_selection == "1. Main Page":
             output_cable_size = st.text_input("Output Cable Size / Type (Charging Cable)", value=st.session_state.output_cable_size)
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: CSS2-5M-250A cable size 2 × 70 mm²+25mm²</p>", unsafe_allow_html=True)
 
-            # GPS Coordinate Latitude Longitude & Map Dialog
+# GPS Coordinate Latitude Longitude & Map Dialog
             st.markdown("GPS Coordinate Latitude Longitude")
             col_gps_in, col_gps_btn = st.columns([4, 1])
             with col_gps_in:
-                gps_lat = st.text_input("Latitude Longitude", value=st.session_state.gps_lat, key="input_gps_lat", placeholder="2.800693")
+                gps_lat = st.text_input("Latitude Longitude", value=st.session_state.gps_lat, key="input_gps_lat", placeholder="2.800693, 101.686073")
                 st.session_state.gps_lat = gps_lat
             with col_gps_btn:
                 st.markdown("<br>", unsafe_allow_html=True)
@@ -538,7 +538,7 @@ if nav_selection == "1. Main Page":
                         from streamlit_folium import st_folium
                         
                         try:
-                            init_lat = target_lat if target_lat is not None else float(st.session_state.get("gps_lat", "2.800693") or 2.800693)
+                            init_lat = target_lat if target_lat is not None else float(st.session_state.get("gps_lat", "2.800693").split(',')[0].strip() if ',' in st.session_state.get("gps_lat", "2.800693") else st.session_state.get("gps_lat", "2.800693") or 2.800693)
                         except:
                             init_lat = 2.800693
                         try:
@@ -555,20 +555,22 @@ if nav_selection == "1. Main Page":
                         if map_data and map_data.get("last_clicked"):
                             clicked_lat = map_data["last_clicked"]["lat"]
                             clicked_lon = map_data["last_clicked"]["lng"]
-                            st.session_state.gps_lat = str(clicked_lat)
+                            coord_str = f"{clicked_lat}, {clicked_lon}"
+                            st.session_state.gps_lat = coord_str
                             st.session_state.gps_lon = str(clicked_lon)
-                            st.session_state.input_gps_lat = str(clicked_lat)
-                            st.success(f"Saved Latitude: {clicked_lat}, Longitude: {clicked_lon}")
+                            st.session_state.input_gps_lat = coord_str
+                            st.success(f"Saved Coordinates: {coord_str}")
                             time.sleep(0.5)
                             st.rerun()
                     except Exception as e:
                         st.warning(f"Interactive map requires folium and streamlit-folium. Error: {e}")
-                        dlg_lat = st.text_input("Latitude", value=st.session_state.get("gps_lat", "2.800693"))
-                        dlg_lon = st.text_input("Longitude", value=st.session_state.get("gps_lon", "101.686073"))
+                        dlg_lat = st.text_input("Latitude", value="2.800693")
+                        dlg_lon = st.text_input("Longitude", value="101.686073")
                         if st.button("✅ Save Coordinates", use_container_width=True):
-                            st.session_state.gps_lat = dlg_lat
+                            coord_str = f"{dlg_lat}, {dlg_lon}"
+                            st.session_state.gps_lat = coord_str
                             st.session_state.gps_lon = dlg_lon
-                            st.session_state.input_gps_lat = dlg_lat
+                            st.session_state.input_gps_lat = coord_str
                             st.success("Coordinates saved!")
                             time.sleep(0.5)
                             st.rerun()
@@ -578,7 +580,7 @@ if nav_selection == "1. Main Page":
 
                 if st.button("🗺️ Map", key="btn_open_map"):
                     gps_map_dialog()
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693, 101.686073</p>", unsafe_allow_html=True)
 
         with col_s2:
             # No. of Units with stepper buttons [-] [+]
