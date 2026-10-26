@@ -441,7 +441,6 @@ defaults = {
     "no_lot": "",
     "hak_milik": "",
     "kedudukan_premis": "",
-    "description": "",
     "tarikh_mulatugas_count": 1,
     "evcs_models": [
         {
