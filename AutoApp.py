@@ -299,18 +299,23 @@ defaults = {
     "no_lot": "",
     "hak_milik": "",
     "kedudukan_premis": "",
-    "brand_model": "",
-    "no_of_units": "",
-    "rated_input_power": "",
-    "max_charging_power": "",
-    "mode_of_charging": "",
-    "connector_type": "",
-    "output_cable_size": "",
-    "no_of_charging_bays": "",
     "gps_lat": "",
     "gps_lon": "",
     "description": "",
     "tarikh_mulatugas_count": 1,
+    "evcs_models": [
+        {
+            "brand_model": "",
+            "no_of_units": "",
+            "rated_input_power": "",
+            "max_charging_power": "",
+            "mode_of_charging": "",
+            "connector_type": "",
+            "output_cable_size": "",
+            "no_of_charging_bays": "",
+            "is_minimized": False
+        }
+    ]
 }
 
 for key, default in defaults.items():
@@ -391,31 +396,26 @@ if nav_selection == "1. Main Page":
             kedudukan_premis = st.selectbox("Kedudukan Premis", kedudukan_options, index=kedudukan_options.index(st.session_state.kedudukan_premis) if st.session_state.kedudukan_premis in kedudukan_options else 0)
             st.session_state.kedudukan_premis = kedudukan_premis
 
-        # --- Side-by-Side EVCS Technical Specifications ---
+        # --- Side-by-Side EVCS Technical Specifications with Multiple Dynamic Models & Minimize/Expand ---
         st.markdown("---")
         st.markdown("#### ⚡ EVCS Technical Specifications")
 
-        def select_model_120():
-            st.session_state.brand_model = "Guorui / GRD08-120SDE"
-            st.session_state.max_charging_power = "120 kW / DC"
-            st.session_state.rated_input_power = "133 kW AC"
-            st.session_state.mode_of_charging = "Mode 4"
-            st.session_state.connector_type = "CCS 2"
+        def select_model_preset(model_idx, preset_type):
+            if preset_type == "120":
+                st.session_state.evcs_models[model_idx]["brand_model"] = "Guorui / GRD08-120SDE"
+                st.session_state.evcs_models[model_idx]["max_charging_power"] = "120 kW / DC"
+                st.session_state.evcs_models[model_idx]["rated_input_power"] = "133 kW AC"
+                st.session_state.evcs_models[model_idx]["mode_of_charging"] = "Mode 4"
+                st.session_state.evcs_models[model_idx]["connector_type"] = "CCS 2"
+            elif preset_type == "240":
+                st.session_state.evcs_models[model_idx]["brand_model"] = "Guorui / GRD08-240SDE"
+                st.session_state.evcs_models[model_idx]["max_charging_power"] = "240 kW / DC"
+                st.session_state.evcs_models[model_idx]["rated_input_power"] = "266 kW AC"
+                st.session_state.evcs_models[model_idx]["mode_of_charging"] = "Mode 4"
+                st.session_state.evcs_models[model_idx]["connector_type"] = "CCS 2"
 
-        def select_model_240():
-            st.session_state.brand_model = "Guorui / GRD08-240SDE"
-            st.session_state.max_charging_power = "240 kW / DC"
-            st.session_state.rated_input_power = "266 kW AC"
-            st.session_state.mode_of_charging = "Mode 4"
-            st.session_state.connector_type = "CCS 2"
-
-        def select_model_add():
-            st.session_state.brand_model = ""
-            st.session_state.max_charging_power = ""
-            st.session_state.rated_input_power = ""
-            st.session_state.mode_of_charging = ""
-            st.session_state.connector_type = ""
-
+        # Preset selection buttons for the active (latest un-minimized) model
+        active_idx = len(st.session_state.evcs_models) - 1
         col_img1, col_img2, col_img3 = st.columns(3)
 
         with col_img1:
@@ -427,7 +427,7 @@ if nav_selection == "1. Main Page":
                     else:
                         st.warning("DC_120.png not found")
                 if st.button("Guorui / GRD08-120SDE", use_container_width=True, key="btn_120"):
-                    select_model_120()
+                    select_model_preset(active_idx, "120")
                     st.rerun()
 
         with col_img2:
@@ -439,7 +439,7 @@ if nav_selection == "1. Main Page":
                     else:
                         st.warning("DC_240.png not found")
                 if st.button("Guorui / GRD08-240SDE", use_container_width=True, key="btn_240"):
-                    select_model_240()
+                    select_model_preset(active_idx, "240")
                     st.rerun()
 
         with col_img3:
@@ -450,261 +450,291 @@ if nav_selection == "1. Main Page":
                         st.image("add.png", width=90)
                     else:
                         st.warning("add.png not found")
-                if st.button("+ Add Other Model", use_container_width=True, key="btn_add"):
-                    select_model_add()
+                if st.button("+ add more type", use_container_width=True, key="btn_add_more_type"):
+                    # Minimize previous active model and append a new blank model form
+                    st.session_state.evcs_models[active_idx]["is_minimized"] = True
+                    st.session_state.evcs_models.append({
+                        "brand_model": "",
+                        "no_of_units": "",
+                        "rated_input_power": "",
+                        "max_charging_power": "",
+                        "mode_of_charging": "",
+                        "connector_type": "",
+                        "output_cable_size": "",
+                        "no_of_charging_bays": "",
+                        "is_minimized": False
+                    })
                     st.rerun()
 
         st.markdown("---")
 
-        col_s1, col_s2 = st.columns(2)
-
-        with col_s1:
-            brand_model = st.text_input("Brand / Model", value=st.session_state.brand_model)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: Guorui / GRD08-120SDE</p>", unsafe_allow_html=True)
-
-            # Rated Input Power with stepper buttons [-] [+]
-            col_rip_in, col_rip_btn = st.columns([4, 1])
-            with col_rip_in:
-                rated_input_power = st.text_input("Rated Input Power (kW AC)", value=st.session_state.rated_input_power, key="input_rated_input_power")
-                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 133 kW AC</p>", unsafe_allow_html=True)
-                st.session_state.rated_input_power = rated_input_power
-            with col_rip_btn:
-                st.markdown("<br>", unsafe_allow_html=True)
-                b_m1, b_p1 = st.columns(2)
-                with b_m1:
-                    if st.button("-", key="minus_rip"):
-                        import re
-                        curr = st.session_state.get("input_rated_input_power", st.session_state.rated_input_power)
-                        nums = re.findall(r'\d+', curr)
-                        if nums:
-                            val = max(0, int(nums[0]) - 1)
-                            new_val = curr.replace(nums[0], str(val), 1)
-                        else:
-                            new_val = "0"
-                        st.session_state.rated_input_power = new_val
-                        st.session_state.input_rated_input_power = new_val
+        # Render all EVCS model forms (minimized ones as expanders, active one open)
+        for idx, model in enumerate(st.session_state.evcs_models):
+            m_title = model['brand_model'] if model['brand_model'] else f"Model Type {idx + 1} (New)"
+            
+            if model["is_minimized"]:
+                with st.expander(f"📦 Model {idx + 1}: {m_title} (Click to expand)", expanded=False):
+                    c_min1, c_min2 = st.columns(2)
+                    with c_min1:
+                        st.write(f"**Brand / Model:** {model['brand_model'] or '-'}")
+                        st.write(f"**Rated Input Power:** {model['rated_input_power'] or '-'}")
+                        st.write(f"**Mode of Charging:** {model['mode_of_charging'] or '-'}")
+                        st.write(f"**Output Cable Size:** {model['output_cable_size'] or '-'}")
+                    with c_min2:
+                        st.write(f"**No. of Units:** {model['no_of_units'] or '-'}")
+                        st.write(f"**Max. Charging Power:** {model['max_charging_power'] or '-'}")
+                        st.write(f"**Connector Type:** {model['connector_type'] or '-'}")
+                        st.write(f"**No. of Charging Bays:** {model['no_of_charging_bays'] or '-'}")
+                    
+                    if st.button(f"✏️ Edit Model {idx + 1}", key=f"edit_model_{idx}"):
+                        st.session_state.evcs_models[idx]["is_minimized"] = False
                         st.rerun()
-                with b_p1:
-                    if st.button("+", key="plus_rip"):
-                        import re
-                        curr = st.session_state.get("input_rated_input_power", st.session_state.rated_input_power)
-                        nums = re.findall(r'\d+', curr)
-                        if nums:
-                            val = int(nums[0]) + 1
-                            new_val = curr.replace(nums[0], str(val), 1)
-                        else:
-                            new_val = "1"
-                        st.session_state.rated_input_power = new_val
-                        st.session_state.input_rated_input_power = new_val
-                        st.rerun()
+            else:
+                if len(st.session_state.evcs_models) > 1:
+                    st.markdown(f"#### ⚙️ Active Model Type {idx + 1}")
 
-            mode_of_charging = st.text_input("Mode of Charging", value=st.session_state.mode_of_charging)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: Mode 4</p>", unsafe_allow_html=True)
+                col_s1, col_s2 = st.columns(2)
 
-            output_cable_size = st.text_input("Output Cable Size / Type (Charging Cable)", value=st.session_state.output_cable_size)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: CSS2-5M-250A cable size 2 × 70 mm²+25mm²</p>", unsafe_allow_html=True)
+                with col_s1:
+                    brand_model = st.text_input("Brand / Model", value=model["brand_model"], key=f"brand_model_{idx}")
+                    st.session_state.evcs_models[idx]["brand_model"] = brand_model
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: Guorui / GRD08-120SDE</p>", unsafe_allow_html=True)
 
-# GPS Coordinate Latitude Longitude & Map Dialog
-            st.markdown("GPS Coordinate Latitude Longitude")
-            col_gps_in, col_gps_btn = st.columns([4, 1])
-            with col_gps_in:
-                gps_lat = st.text_input("Latitude Longitude", value=st.session_state.gps_lat, key="input_gps_lat", placeholder="2.800693, 101.686073")
-                st.session_state.gps_lat = gps_lat
-            with col_gps_btn:
-                st.markdown("<br>", unsafe_allow_html=True)
-                @st.dialog("🗺️ Select Location on Map", width="large")
-                def gps_map_dialog():
-                    st.markdown("Search a location or click on the map to pin coordinates:", unsafe_allow_html=True)
-                    
-                    import urllib.request
-                    import urllib.parse
-                    import json
+                    # Rated Input Power with stepper buttons [-] [+]
+                    col_rip_in, col_rip_btn = st.columns([4, 1])
+                    with col_rip_in:
+                        rated_input_power = st.text_input("Rated Input Power (kW AC)", value=model["rated_input_power"], key=f"input_rated_input_power_{idx}")
+                        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 133 kW AC</p>", unsafe_allow_html=True)
+                        st.session_state.evcs_models[idx]["rated_input_power"] = rated_input_power
+                    with col_rip_btn:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        b_m1, b_p1 = st.columns(2)
+                        with b_m1:
+                            if st.button("-", key=f"minus_rip_{idx}"):
+                                import re
+                                curr = st.session_state.evcs_models[idx]["rated_input_power"]
+                                nums = re.findall(r'\d+', curr)
+                                if nums:
+                                    val = max(0, int(nums[0]) - 1)
+                                    new_val = curr.replace(nums[0], str(val), 1)
+                                else:
+                                    new_val = "0"
+                                st.session_state.evcs_models[idx]["rated_input_power"] = new_val
+                                st.rerun()
+                        with b_p1:
+                            if st.button("+", key=f"plus_rip_{idx}"):
+                                import re
+                                curr = st.session_state.evcs_models[idx]["rated_input_power"]
+                                nums = re.findall(r'\d+', curr)
+                                if nums:
+                                    val = int(nums[0]) + 1
+                                    new_val = curr.replace(nums[0], str(val), 1)
+                                else:
+                                    new_val = "1"
+                                st.session_state.evcs_models[idx]["rated_input_power"] = new_val
+                                st.rerun()
 
-                    search_query = st.text_input("🔍 Search location (e.g. Nilai, Sepang, KLCC)", key="map_search_input")
-                    
-                    target_lat = None
-                    target_lon = None
-                    
-                    if search_query and len(search_query.strip()) > 2:
-                        try:
-                            encoded_q = urllib.parse.quote(search_query)
-                            url = f"https://nominatim.openstreetmap.org/search?q={encoded_q}&format=json&limit=5"
-                            req = urllib.request.Request(url, headers={'User-Agent': 'StreamlitApp/1.0'})
-                            with urllib.request.urlopen(req) as response:
-                                results = json.loads(response.read().decode())
-                                if results:
-                                    options = {res['display_name']: (float(res['lat']), float(res['lon'])) for res in results}
-                                    selected_place = st.selectbox("📍 Select suggestion:", list(options.keys()), key="map_search_suggestions")
-                                    if selected_place:
-                                        target_lat, target_lon = options[selected_place]
-                        except Exception as e:
-                            st.error(f"Search error: {e}")
+                    mode_of_charging = st.text_input("Mode of Charging", value=model["mode_of_charging"], key=f"mode_of_charging_{idx}")
+                    st.session_state.evcs_models[idx]["mode_of_charging"] = mode_of_charging
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: Mode 4</p>", unsafe_allow_html=True)
 
+                    output_cable_size = st.text_input("Output Cable Size / Type (Charging Cable)", value=model["output_cable_size"], key=f"output_cable_size_{idx}")
+                    st.session_state.evcs_models[idx]["output_cable_size"] = output_cable_size
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: CSS2-5M-250A cable size 2 × 70 mm²+25mm²</p>", unsafe_allow_html=True)
+
+                with col_s2:
+                    # No. of Units with stepper buttons [-] [+]
+                    col_nou_in, col_nou_btn = st.columns([4, 1])
+                    with col_nou_in:
+                        no_of_units = st.text_input("No. of Units", value=model["no_of_units"], key=f"input_no_of_units_{idx}")
+                        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2</p>", unsafe_allow_html=True)
+                        st.session_state.evcs_models[idx]["no_of_units"] = no_of_units
+                    with col_nou_btn:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        b_m2, b_p2 = st.columns(2)
+                        with b_m2:
+                            if st.button("-", key=f"minus_nou_{idx}"):
+                                import re
+                                curr = st.session_state.evcs_models[idx]["no_of_units"]
+                                nums = re.findall(r'\d+', curr)
+                                if nums:
+                                    val = max(0, int(nums[0]) - 1)
+                                    new_val = curr.replace(nums[0], str(val), 1)
+                                else:
+                                    new_val = "0"
+                                st.session_state.evcs_models[idx]["no_of_units"] = new_val
+                                st.rerun()
+                        with b_p2:
+                            if st.button("+", key=f"plus_nou_{idx}"):
+                                import re
+                                curr = st.session_state.evcs_models[idx]["no_of_units"]
+                                nums = re.findall(r'\d+', curr)
+                                if nums:
+                                    val = int(nums[0]) + 1
+                                    new_val = curr.replace(nums[0], str(val), 1)
+                                else:
+                                    new_val = "1"
+                                st.session_state.evcs_models[idx]["no_of_units"] = new_val
+                                st.rerun()
+
+                    # Max. Charging / Output Power with stepper buttons [-] [+]
+                    col_mcp_in, col_mcp_btn = st.columns([4, 1])
+                    with col_mcp_in:
+                        max_charging_power = st.text_input("Max. Charging / Output Power (AC or DC)", value=model["max_charging_power"], key=f"input_max_charging_power_{idx}")
+                        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 120 kW / DC</p>", unsafe_allow_html=True)
+                        st.session_state.evcs_models[idx]["max_charging_power"] = max_charging_power
+                    with col_mcp_btn:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        b_m3, b_p3 = st.columns(2)
+                        with b_m3:
+                            if st.button("-", key=f"minus_mcp_{idx}"):
+                                import re
+                                curr = st.session_state.evcs_models[idx]["max_charging_power"]
+                                nums = re.findall(r'\d+', curr)
+                                if nums:
+                                    val = max(0, int(nums[0]) - 1)
+                                    new_val = curr.replace(nums[0], str(val), 1)
+                                else:
+                                    new_val = "0"
+                                st.session_state.evcs_models[idx]["max_charging_power"] = new_val
+                                st.rerun()
+                        with b_p3:
+                            if st.button("+", key=f"plus_mcp_{idx}"):
+                                import re
+                                curr = st.session_state.evcs_models[idx]["max_charging_power"]
+                                nums = re.findall(r'\d+', curr)
+                                if nums:
+                                    val = int(nums[0]) + 1
+                                    new_val = curr.replace(nums[0], str(val), 1)
+                                else:
+                                    new_val = "1"
+                                st.session_state.evcs_models[idx]["max_charging_power"] = new_val
+                                st.rerun()
+
+                    connector_type = st.text_input("Connector Type", value=model["connector_type"], key=f"connector_type_{idx}")
+                    st.session_state.evcs_models[idx]["connector_type"] = connector_type
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 8 × CCS 2</p>", unsafe_allow_html=True)
+
+                    # No. of Charging Bays with stepper buttons [-] [+]
+                    col_nocb_in, col_nocb_btn = st.columns([4, 1])
+                    with col_nocb_in:
+                        no_of_charging_bays = st.text_input("No. of Charging Bays", value=model["no_of_charging_bays"], key=f"input_no_of_charging_bays_{idx}")
+                        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 10</p>", unsafe_allow_html=True)
+                        st.session_state.evcs_models[idx]["no_of_charging_bays"] = no_of_charging_bays
+                    with col_nocb_btn:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        b_m4, b_p4 = st.columns(2)
+                        with b_m4:
+                            if st.button("-", key=f"minus_nocb_{idx}"):
+                                import re
+                                curr = st.session_state.evcs_models[idx]["no_of_charging_bays"]
+                                nums = re.findall(r'\d+', curr)
+                                if nums:
+                                    val = max(0, int(nums[0]) - 1)
+                                    new_val = curr.replace(nums[0], str(val), 1)
+                                else:
+                                    new_val = "0"
+                                st.session_state.evcs_models[idx]["no_of_charging_bays"] = new_val
+                                st.rerun()
+                        with b_p4:
+                            if st.button("+", key=f"plus_nocb_{idx}"):
+                                import re
+                                curr = st.session_state.evcs_models[idx]["no_of_charging_bays"]
+                                nums = re.findall(r'\d+', curr)
+                                if nums:
+                                    val = int(nums[0]) + 1
+                                    new_val = curr.replace(nums[0], str(val), 1)
+                                else:
+                                    new_val = "1"
+                                st.session_state.evcs_models[idx]["no_of_charging_bays"] = new_val
+                                st.rerun()
+
+            st.markdown("---")
+
+        # GPS Coordinate Latitude Longitude & Map Dialog
+        st.markdown("GPS Coordinate Latitude Longitude")
+        col_gps_in, col_gps_btn = st.columns([4, 1])
+        with col_gps_in:
+            gps_lat = st.text_input("Latitude Longitude", value=st.session_state.gps_lat, key="input_gps_lat", placeholder="2.800693, 101.686073")
+            st.session_state.gps_lat = gps_lat
+        with col_gps_btn:
+            st.markdown("<br>", unsafe_allow_html=True)
+            @st.dialog("🗺️ Select Location on Map", width="large")
+            def gps_map_dialog():
+                st.markdown("Search a location or click on the map to pin coordinates:", unsafe_allow_html=True)
+                
+                import urllib.request
+                import urllib.parse
+                import json
+
+                search_query = st.text_input("🔍 Search location (e.g. Nilai, Sepang, KLCC)", key="map_search_input")
+                
+                target_lat = None
+                target_lon = None
+                
+                if search_query and len(search_query.strip()) > 2:
                     try:
-                        import folium
-                        from streamlit_folium import st_folium
-                        
-                        try:
-                            init_lat = target_lat if target_lat is not None else float(st.session_state.get("gps_lat", "2.800693").split(',')[0].strip() if ',' in st.session_state.get("gps_lat", "2.800693") else st.session_state.get("gps_lat", "2.800693") or 2.800693)
-                        except:
-                            init_lat = 2.800693
-                        try:
-                            init_lon = target_lon if target_lon is not None else float(st.session_state.get("gps_lon", "101.686073") or 101.686073)
-                        except:
-                            init_lon = 101.686073
-
-                        m = folium.Map(location=[init_lat, init_lon], zoom_start=14 if target_lat else 13)
-                        folium.Marker([init_lat, init_lon], popup="Selected Location", tooltip="Pinned Location").add_to(m)
-                        m.add_child(folium.LatLngPopup())
-                        
-                        map_data = st_folium(m, use_container_width=True, height=500, key="map_popup_interactive")
-                        
-                        if map_data and map_data.get("last_clicked"):
-                            clicked_lat = map_data["last_clicked"]["lat"]
-                            clicked_lon = map_data["last_clicked"]["lng"]
-                            coord_str = f"{clicked_lat}, {clicked_lon}"
-                            st.session_state.gps_lat = coord_str
-                            st.session_state.gps_lon = str(clicked_lon)
-                            st.session_state.input_gps_lat = coord_str
-                            st.success(f"Saved Coordinates: {coord_str}")
-                            time.sleep(0.5)
-                            st.rerun()
+                        encoded_q = urllib.parse.quote(search_query)
+                        url = f"https://nominatim.openstreetmap.org/search?q={encoded_q}&format=json&limit=5"
+                        req = urllib.request.Request(url, headers={'User-Agent': 'StreamlitApp/1.0'})
+                        with urllib.request.urlopen(req) as response:
+                            results = json.loads(response.read().decode())
+                            if results:
+                                options = {res['display_name']: (float(res['lat']), float(res['lon'])) for res in results}
+                                selected_place = st.selectbox("📍 Select suggestion:", list(options.keys()), key="map_search_suggestions")
+                                if selected_place:
+                                    target_lat, target_lon = options[selected_place]
                     except Exception as e:
-                        st.warning(f"Interactive map requires folium and streamlit-folium. Error: {e}")
-                        dlg_lat = st.text_input("Latitude", value="2.800693")
-                        dlg_lon = st.text_input("Longitude", value="101.686073")
-                        if st.button("✅ Save Coordinates", use_container_width=True):
-                            coord_str = f"{dlg_lat}, {dlg_lon}"
-                            st.session_state.gps_lat = coord_str
-                            st.session_state.gps_lon = dlg_lon
-                            st.session_state.input_gps_lat = coord_str
-                            st.success("Coordinates saved!")
-                            time.sleep(0.5)
-                            st.rerun()
+                        st.error(f"Search error: {e}")
 
-                    if st.button("✅ Close / Done", use_container_width=True):
+                try:
+                    import folium
+                    from streamlit_folium import st_folium
+                    
+                    try:
+                        init_lat = target_lat if target_lat is not None else float(st.session_state.get("gps_lat", "2.800693").split(',')[0].strip() if ',' in st.session_state.get("gps_lat", "2.800693") else st.session_state.get("gps_lat", "2.800693") or 2.800693)
+                    except:
+                        init_lat = 2.800693
+                    try:
+                        init_lon = target_lon if target_lon is not None else float(st.session_state.get("gps_lon", "101.686073") or 101.686073)
+                    except:
+                        init_lon = 101.686073
+
+                    m = folium.Map(location=[init_lat, init_lon], zoom_start=14 if target_lat else 13)
+                    folium.Marker([init_lat, init_lon], popup="Selected Location", tooltip="Pinned Location").add_to(m)
+                    m.add_child(folium.LatLngPopup())
+                    
+                    map_data = st_folium(m, use_container_width=True, height=500, key="map_popup_interactive")
+                    
+                    if map_data and map_data.get("last_clicked"):
+                        clicked_lat = map_data["last_clicked"]["lat"]
+                        clicked_lon = map_data["last_clicked"]["lng"]
+                        coord_str = f"{clicked_lat}, {clicked_lon}"
+                        st.session_state.gps_lat = coord_str
+                        st.session_state.gps_lon = str(clicked_lon)
+                        st.session_state.input_gps_lat = coord_str
+                        st.success(f"Saved Coordinates: {coord_str}")
+                        time.sleep(0.5)
+                        st.rerun()
+                except Exception as e:
+                    st.warning(f"Interactive map requires folium and streamlit-folium. Error: {e}")
+                    dlg_lat = st.text_input("Latitude", value="2.800693")
+                    dlg_lon = st.text_input("Longitude", value="101.686073")
+                    if st.button("✅ Save Coordinates", use_container_width=True):
+                        coord_str = f"{dlg_lat}, {dlg_lon}"
+                        st.session_state.gps_lat = coord_str
+                        st.session_state.gps_lon = dlg_lon
+                        st.session_state.input_gps_lat = coord_str
+                        st.success("Coordinates saved!")
+                        time.sleep(0.5)
                         st.rerun()
 
-                if st.button("🗺️ Map", key="btn_open_map"):
-                    gps_map_dialog()
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693, 101.686073</p>", unsafe_allow_html=True)
+                if st.button("✅ Close / Done", use_container_width=True):
+                    st.rerun()
 
-        with col_s2:
-            # No. of Units with stepper buttons [-] [+]
-            col_nou_in, col_nou_btn = st.columns([4, 1])
-            with col_nou_in:
-                no_of_units = st.text_input("No. of Units", value=st.session_state.no_of_units, key="input_no_of_units")
-                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2</p>", unsafe_allow_html=True)
-                st.session_state.no_of_units = no_of_units
-            with col_nou_btn:
-                st.markdown("<br>", unsafe_allow_html=True)
-                b_m2, b_p2 = st.columns(2)
-                with b_m2:
-                    if st.button("-", key="minus_nou"):
-                        import re
-                        curr = st.session_state.get("input_no_of_units", st.session_state.no_of_units)
-                        nums = re.findall(r'\d+', curr)
-                        if nums:
-                            val = max(0, int(nums[0]) - 1)
-                            new_val = curr.replace(nums[0], str(val), 1)
-                        else:
-                            new_val = "0"
-                        st.session_state.no_of_units = new_val
-                        st.session_state.input_no_of_units = new_val
-                        st.rerun()
-                with b_p2:
-                    if st.button("+", key="plus_nou"):
-                        import re
-                        curr = st.session_state.get("input_no_of_units", st.session_state.no_of_units)
-                        nums = re.findall(r'\d+', curr)
-                        if nums:
-                            val = int(nums[0]) + 1
-                            new_val = curr.replace(nums[0], str(val), 1)
-                        else:
-                            new_val = "1"
-                        st.session_state.no_of_units = new_val
-                        st.session_state.input_no_of_units = new_val
-                        st.rerun()
-
-            # Max. Charging / Output Power with stepper buttons [-] [+]
-            col_mcp_in, col_mcp_btn = st.columns([4, 1])
-            with col_mcp_in:
-                max_charging_power = st.text_input("Max. Charging / Output Power (AC or DC)", value=st.session_state.max_charging_power, key="input_max_charging_power")
-                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 120 kW / DC</p>", unsafe_allow_html=True)
-                st.session_state.max_charging_power = max_charging_power
-            with col_mcp_btn:
-                st.markdown("<br>", unsafe_allow_html=True)
-                b_m3, b_p3 = st.columns(2)
-                with b_m3:
-                    if st.button("-", key="minus_mcp"):
-                        import re
-                        curr = st.session_state.get("input_max_charging_power", st.session_state.max_charging_power)
-                        nums = re.findall(r'\d+', curr)
-                        if nums:
-                            val = max(0, int(nums[0]) - 1)
-                            new_val = curr.replace(nums[0], str(val), 1)
-                        else:
-                            new_val = "0"
-                        st.session_state.max_charging_power = new_val
-                        st.session_state.input_max_charging_power = new_val
-                        st.rerun()
-                with b_p3:
-                    if st.button("+", key="plus_mcp"):
-                        import re
-                        curr = st.session_state.get("input_max_charging_power", st.session_state.max_charging_power)
-                        nums = re.findall(r'\d+', curr)
-                        if nums:
-                            val = int(nums[0]) + 1
-                            new_val = curr.replace(nums[0], str(val), 1)
-                        else:
-                            new_val = "1"
-                        st.session_state.max_charging_power = new_val
-                        st.session_state.input_max_charging_power = new_val
-                        st.rerun()
-
-            connector_type = st.text_input("Connector Type", value=st.session_state.connector_type)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 8 × CCS 2</p>", unsafe_allow_html=True)
-
-            # No. of Charging Bays with stepper buttons [-] [+]
-            col_nocb_in, col_nocb_btn = st.columns([4, 1])
-            with col_nocb_in:
-                no_of_charging_bays = st.text_input("No. of Charging Bays", value=st.session_state.no_of_charging_bays, key="input_no_of_charging_bays")
-                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 10</p>", unsafe_allow_html=True)
-                st.session_state.no_of_charging_bays = no_of_charging_bays
-            with col_nocb_btn:
-                st.markdown("<br>", unsafe_allow_html=True)
-                b_m4, b_p4 = st.columns(2)
-                with b_m4:
-                    if st.button("-", key="minus_nocb"):
-                        import re
-                        curr = st.session_state.get("input_no_of_charging_bays", st.session_state.no_of_charging_bays)
-                        nums = re.findall(r'\d+', curr)
-                        if nums:
-                            val = max(0, int(nums[0]) - 1)
-                            new_val = curr.replace(nums[0], str(val), 1)
-                        else:
-                            new_val = "0"
-                        st.session_state.no_of_charging_bays = new_val
-                        st.session_state.input_no_of_charging_bays = new_val
-                        st.rerun()
-                with b_p4:
-                    if st.button("+", key="plus_nocb"):
-                        import re
-                        curr = st.session_state.get("input_no_of_charging_bays", st.session_state.no_of_charging_bays)
-                        nums = re.findall(r'\d+', curr)
-                        if nums:
-                            val = int(nums[0]) + 1
-                            new_val = curr.replace(nums[0], str(val), 1)
-                        else:
-                            new_val = "1"
-                        st.session_state.no_of_charging_bays = new_val
-                        st.session_state.input_no_of_charging_bays = new_val
-                        st.rerun()
-
-        st.markdown("---")
-
-        ##description = st.text_area("📄 Project Description & Objectives", value=st.session_state.description, height=150)
-        ##st.session_state.description = description
+            if st.button("🗺️ Map", key="btn_open_map"):
+                gps_map_dialog()
+        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693, 101.686073</p>", unsafe_allow_html=True)
 
         st.markdown("---")
         st.subheader("📋 Application Sections (Bahagian A - G)")
@@ -1224,6 +1254,9 @@ if nav_selection == "1. Main Page":
                         c_checklist_json = json.dumps(bahagian_c_summary)
                         c_competent_json = json.dumps(bahagian_c_competent)
 
+                        # Process EVCS models JSON
+                        evcs_models_json = json.dumps(st.session_state.evcs_models)
+
                         # Process Bahagian E Data
                         kat_penggunaan_list = []
                         if e_kat_pengilangan: kat_penggunaan_list.append("Pengilangan / Industri")
@@ -1274,12 +1307,18 @@ if nav_selection == "1. Main Page":
                         }
                         bahagian_g_json = json.dumps(bahagian_g_data)
 
+                        # For backward compatibility with single columns in sheet, take primary model info
+                        primary_model = st.session_state.evcs_models[0] if st.session_state.evcs_models else {}
+
                         row = [
                             timestamp, project_name, negeri, pbt, poskod, daerah, mukim, kawasan,
                             taman_tempat, jalan, no_lot, hak_milik, kedudukan_premis,
-                            brand_model, no_of_units, rated_input_power, max_charging_power,
-                            mode_of_charging, connector_type, output_cable_size, no_of_charging_bays,
+                            primary_model.get("brand_model", ""), primary_model.get("no_of_units", ""), 
+                            primary_model.get("rated_input_power", ""), primary_model.get("max_charging_power", ""),
+                            primary_model.get("mode_of_charging", ""), primary_model.get("connector_type", ""), 
+                            primary_model.get("output_cable_size", ""), primary_model.get("no_of_charging_bays", ""),
                             gps_lat, gps_lon, description,
+                            evcs_models_json,
                             c_checklist_json, c_competent_json,
                             bahagian_e_json,
                             bahagian_f_json, bahagian_g_json
@@ -1291,6 +1330,7 @@ if nav_selection == "1. Main Page":
                             "Brand / Model", "No. of Units", "Rated Input Power (kW AC)", "Max. Charging Power",
                             "Mode of Charging", "Connector Type", "Output Cable Size", "No. of Charging Bays",
                             "GPS Latitude", "GPS Longitude", "Description",
+                            "EVCS All Models (JSON)",
                             "Bahagian C Senarai Semak (JSON)", "Bahagian C Orang Kompeten (JSON)",
                             "Bahagian E Maklumat Permohonan (JSON)",
                             "Bahagian F Pengakuan (JSON)", "Bahagian G Pengesahan (JSON)"
@@ -1312,18 +1352,23 @@ if nav_selection == "1. Main Page":
                             "no_lot": "",
                             "hak_milik": "",
                             "kedudukan_premis": "",
-                            "brand_model": "",
-                            "no_of_units": "",
-                            "rated_input_power": "",
-                            "max_charging_power": "",
-                            "mode_of_charging": "",
-                            "connector_type": "",
-                            "output_cable_size": "",
-                            "no_of_charging_bays": "",
                             "gps_lat": "",
                             "gps_lon": "",
                             "description": "",
                             "tarikh_mulatugas_count": 1,
+                            "evcs_models": [
+                                {
+                                    "brand_model": "",
+                                    "no_of_units": "",
+                                    "rated_input_power": "",
+                                    "max_charging_power": "",
+                                    "mode_of_charging": "",
+                                    "connector_type": "",
+                                    "output_cable_size": "",
+                                    "no_of_charging_bays": "",
+                                    "is_minimized": False
+                                }
+                            ]
                         })
                         st.success("Application Submitted Successfully!")
                         time.sleep(2)
