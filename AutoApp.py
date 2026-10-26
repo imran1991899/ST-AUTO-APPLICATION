@@ -27,6 +27,26 @@ except ImportError:
 # --------- Page Setup ---------
 st.set_page_config(page_title="Application Portal", layout="wide")
 
+# --------- Custom CSS for Border Cards around Images & Stepper Buttons ---------
+st.markdown("""
+<style>
+.evc-card {
+    border: 2px solid #008080;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    background-color: #0e1117;
+    margin-bottom: 10px;
+}
+[data-testid="stVerticalBlock"] [data-testid="stContainer"] {
+    border: 2px solid #008080 !important;
+    border-radius: 10px !important;
+    background-color: #0e1117 !important;
+    padding: 10px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # --------- Google Drive Folder ID ---------
 FOLDER_ID = "1edCJklkyUp4UtZl3zOh-HNsYOMmw8hsc"
 
@@ -334,17 +354,6 @@ if nav_selection == "1. Main Page":
         st.markdown("---")
         st.markdown("#### ⚡ EVCS Technical Specifications")
 
-        st.markdown("""
-        <style>
-        [data-testid="stVerticalBlock"] [data-testid="stContainer"] {
-            border: 2px solid #008080 !important;
-            border-radius: 10px !important;
-            background-color: #0e1117 !important;
-            padding: 10px !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
         def select_model_120():
             st.session_state.brand_model = "Guorui / GRD08-120SDE"
             st.session_state.max_charging_power = "120 kW / DC"
@@ -370,7 +379,7 @@ if nav_selection == "1. Main Page":
 
         with col_img1:
             with st.container(border=True):
-                ic1, ic2, ic3 = st.columns([1.7, 2, 1])
+                ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
                     if os.path.exists("DC_120.png"):
                         st.image("DC_120.png", width=90)
@@ -382,7 +391,7 @@ if nav_selection == "1. Main Page":
 
         with col_img2:
             with st.container(border=True):
-                ic1, ic2, ic3 = st.columns([1.7, 2, 1])
+                ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
                     if os.path.exists("DC_240.png"):
                         st.image("DC_240.png", width=90)
@@ -394,7 +403,7 @@ if nav_selection == "1. Main Page":
 
         with col_img3:
             with st.container(border=True):
-                ic1, ic2, ic3 = st.columns([1.7, 2, 1])
+                ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
                     if os.path.exists("add.png"):
                         st.image("add.png", width=90)
@@ -412,8 +421,33 @@ if nav_selection == "1. Main Page":
             brand_model = st.text_input("Brand / Model", value=st.session_state.brand_model)
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: Guorui / GRD08-120SDE</p>", unsafe_allow_html=True)
 
-            rated_input_power = st.text_input("Rated Input Power (kW AC)", value=st.session_state.rated_input_power)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 133 kW AC</p>", unsafe_allow_html=True)
+            # Rated Input Power with stepper buttons [-] [+]
+            col_rip_in, col_rip_btn = st.columns([4, 1])
+            with col_rip_in:
+                rated_input_power = st.text_input("Rated Input Power (kW AC)", value=st.session_state.rated_input_power, key="input_rated_input_power")
+                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 133 kW AC</p>", unsafe_allow_html=True)
+                st.session_state.rated_input_power = rated_input_power
+            with col_rip_btn:
+                st.markdown("<br>", unsafe_allow_html=True)
+                b_m1, b_p1 = st.columns(2)
+                with b_m1:
+                    if st.button("-", key="minus_rip"):
+                        import re
+                        nums = re.findall(r'\d+', st.session_state.rated_input_power)
+                        if nums:
+                            val = max(0, int(nums[0]) - 1)
+                            st.session_state.rated_input_power = st.session_state.rated_input_power.replace(nums[0], str(val), 1)
+                            st.rerun()
+                with b_p1:
+                    if st.button("+", key="plus_rip"):
+                        import re
+                        nums = re.findall(r'\d+', st.session_state.rated_input_power)
+                        if nums:
+                            val = int(nums[0]) + 1
+                            st.session_state.rated_input_power = st.session_state.rated_input_power.replace(nums[0], str(val), 1)
+                        else:
+                            st.session_state.rated_input_power = "1"
+                        st.rerun()
 
             mode_of_charging = st.text_input("Mode of Charging", value=st.session_state.mode_of_charging)
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: Mode 4</p>", unsafe_allow_html=True)
@@ -421,21 +455,117 @@ if nav_selection == "1. Main Page":
             output_cable_size = st.text_input("Output Cable Size / Type (Charging Cable)", value=st.session_state.output_cable_size)
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: CSS2-5M-250A cable size 2 × 70 mm²+25mm²</p>", unsafe_allow_html=True)
 
-            gps_lat = st.text_input("GPS Coordinate Latitude", value=st.session_state.gps_lat)
+            # GPS Coordinate Latitude & Longitude with Map Picker Dialog
+            st.markdown("GPS Coordinate Latitude Longitude")
+            col_gps_in, col_gps_btn = st.columns([4, 1])
+            with col_gps_in:
+                gps_lat = st.text_input("Latitude", value=st.session_state.gps_lat, key="input_gps_lat", placeholder="2.800693")
+                st.session_state.gps_lat = gps_lat
+            with col_gps_btn:
+                st.markdown("<br>", unsafe_allow_html=True)
+                @st.dialog("🗺️ Select Location on Google Map")
+                def gps_map_dialog():
+                    st.markdown("Click the link below to find coordinates on Google Maps, then enter them here:", unsafe_allow_html=True)
+                    st.markdown("[🔗 Open Google Maps in New Tab](https://www.google.com/maps)", unsafe_allow_html=True)
+                    dlg_lat = st.text_input("Latitude", value=st.session_state.get("gps_lat", "2.800693"))
+                    dlg_lon = st.text_input("Longitude", value=st.session_state.get("gps_lon", "101.686073"))
+                    if st.button("✅ Save Coordinates", use_container_width=True):
+                        st.session_state.gps_lat = dlg_lat
+                        st.session_state.gps_lon = dlg_lon
+                        st.success("Coordinates saved!")
+                        time.sleep(0.5)
+                        st.rerun()
+                if st.button("🗺️ Map", key="btn_open_map"):
+                    gps_map_dialog()
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693</p>", unsafe_allow_html=True)
 
         with col_s2:
-            no_of_units = st.text_input("No. of Units", value=st.session_state.no_of_units)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2</p>", unsafe_allow_html=True)
+            # No. of Units with stepper buttons [-] [+]
+            col_nou_in, col_nou_btn = st.columns([4, 1])
+            with col_nou_in:
+                no_of_units = st.text_input("No. of Units", value=st.session_state.no_of_units, key="input_no_of_units")
+                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2</p>", unsafe_allow_html=True)
+                st.session_state.no_of_units = no_of_units
+            with col_nou_btn:
+                st.markdown("<br>", unsafe_allow_html=True)
+                b_m2, b_p2 = st.columns(2)
+                with b_m2:
+                    if st.button("-", key="minus_nou"):
+                        import re
+                        nums = re.findall(r'\d+', st.session_state.no_of_units)
+                        if nums:
+                            val = max(0, int(nums[0]) - 1)
+                            st.session_state.no_of_units = st.session_state.no_of_units.replace(nums[0], str(val), 1)
+                            st.rerun()
+                with b_p2:
+                    if st.button("+", key="plus_nou"):
+                        import re
+                        nums = re.findall(r'\d+', st.session_state.no_of_units)
+                        if nums:
+                            val = int(nums[0]) + 1
+                            st.session_state.no_of_units = st.session_state.no_of_units.replace(nums[0], str(val), 1)
+                        else:
+                            st.session_state.no_of_units = "1"
+                        st.rerun()
 
-            max_charging_power = st.text_input("Max. Charging / Output Power (AC or DC)", value=st.session_state.max_charging_power)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 120 kW / DC</p>", unsafe_allow_html=True)
+            # Max. Charging / Output Power with stepper buttons [-] [+]
+            col_mcp_in, col_mcp_btn = st.columns([4, 1])
+            with col_mcp_in:
+                max_charging_power = st.text_input("Max. Charging / Output Power (AC or DC)", value=st.session_state.max_charging_power, key="input_max_charging_power")
+                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 120 kW / DC</p>", unsafe_allow_html=True)
+                st.session_state.max_charging_power = max_charging_power
+            with col_mcp_btn:
+                st.markdown("<br>", unsafe_allow_html=True)
+                b_m3, b_p3 = st.columns(2)
+                with b_m3:
+                    if st.button("-", key="minus_mcp"):
+                        import re
+                        nums = re.findall(r'\d+', st.session_state.max_charging_power)
+                        if nums:
+                            val = max(0, int(nums[0]) - 1)
+                            st.session_state.max_charging_power = st.session_state.max_charging_power.replace(nums[0], str(val), 1)
+                            st.rerun()
+                with b_p3:
+                    if st.button("+", key="plus_mcp"):
+                        import re
+                        nums = re.findall(r'\d+', st.session_state.max_charging_power)
+                        if nums:
+                            val = int(nums[0]) + 1
+                            st.session_state.max_charging_power = st.session_state.max_charging_power.replace(nums[0], str(val), 1)
+                        else:
+                            st.session_state.max_charging_power = "1"
+                        st.rerun()
 
             connector_type = st.text_input("Connector Type", value=st.session_state.connector_type)
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: 15px;'>Example: 8 × CCS 2</p>", unsafe_allow_html=True)
 
-            no_of_charging_bays = st.text_input("No. of Charging Bays", value=st.session_state.no_of_charging_bays)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 10</p>", unsafe_allow_html=True)
+            # No. of Charging Bays with stepper buttons [-] [+]
+            col_nocb_in, col_nocb_btn = st.columns([4, 1])
+            with col_nocb_in:
+                no_of_charging_bays = st.text_input("No. of Charging Bays", value=st.session_state.no_of_charging_bays, key="input_no_of_charging_bays")
+                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 10</p>", unsafe_allow_html=True)
+                st.session_state.no_of_charging_bays = no_of_charging_bays
+            with col_nocb_btn:
+                st.markdown("<br>", unsafe_allow_html=True)
+                b_m4, b_p4 = st.columns(2)
+                with b_m4:
+                    if st.button("-", key="minus_nocb"):
+                        import re
+                        nums = re.findall(r'\d+', st.session_state.no_of_charging_bays)
+                        if nums:
+                            val = max(0, int(nums[0]) - 1)
+                            st.session_state.no_of_charging_bays = st.session_state.no_of_charging_bays.replace(nums[0], str(val), 1)
+                            st.rerun()
+                with b_p4:
+                    if st.button("+", key="plus_nocb"):
+                        import re
+                        nums = re.findall(r'\d+', st.session_state.no_of_charging_bays)
+                        if nums:
+                            val = int(nums[0]) + 1
+                            st.session_state.no_of_charging_bays = st.session_state.no_of_charging_bays.replace(nums[0], str(val), 1)
+                        else:
+                            st.session_state.no_of_charging_bays = "1"
+                        st.rerun()
 
             gps_lon = st.text_input("GPS Coordinate Longitude", value=st.session_state.gps_lon)
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 101.686073</p>", unsafe_allow_html=True)
