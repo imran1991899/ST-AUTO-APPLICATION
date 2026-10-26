@@ -1389,7 +1389,7 @@ if nav_selection == "1. Main Page":
                             primary_model.get("rated_input_power", ""), primary_model.get("max_charging_power", ""),
                             primary_model.get("mode_of_charging", ""), primary_model.get("connector_type", ""), 
                             primary_model.get("output_cable_size", ""), primary_model.get("no_of_charging_bays", ""),
-                            gps_lat_val, gps_lon_val, description,
+                            gps_lat_val, gps_lon_val,
                             evcs_models_json,
                             c_checklist_json, c_competent_json,
                             bahagian_e_json,
