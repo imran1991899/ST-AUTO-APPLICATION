@@ -522,7 +522,7 @@ if nav_selection == "1. Main Page":
             else:
                 col_title, col_del = st.columns([4, 1])
                 with col_title:
-                    st.markdown(f"#### ⚙️ Active Model: {exact_model_name}")
+                    #st.markdown(f"#### ⚙️ Active Model: {exact_model_name}")
                 with col_del:
                     if len(st.session_state.evcs_models) > 1:
                         if st.button("🗑️ Remove Model", key=f"remove_active_model_{idx}"):
