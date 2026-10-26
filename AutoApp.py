@@ -44,6 +44,13 @@ st.markdown("""
     background-color: #0e1117 !important;
     padding: 10px !important;
 }
+
+/* Green glow effect when clicking/focusing buttons */
+div.stButton > button:active, div.stButton > button:focus {
+    border-color: #00FF00 !important;
+    box-shadow: 0 0 15px #00FF00 !important;
+    color: #00FF00 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
