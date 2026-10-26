@@ -480,7 +480,7 @@ if nav_selection == "1. Main Page":
                     })
                     st.rerun()
 
-        st.markdown("---")
+        #st.markdown("---")
 
         # Function to delete a model type safely
         def remove_evcs_model(model_idx):
