@@ -496,7 +496,7 @@ if nav_selection == "1. Main Page":
             exact_model_name = model['brand_model'].strip() if model['brand_model'] and model['brand_model'].strip() else f"Model Type {idx + 1} (New)"
             
             if model["is_minimized"]:
-                with st.expander(f"📦 {exact_model_name} (Click to expand)", expanded=False):
+                with st.expander(f"🔌 {exact_model_name} (Click to expand)", expanded=False):
                     c_min1, c_min2 = st.columns(2)
                     with c_min1:
                         st.write(f"**Brand / Model:** {model['brand_model'] or '-'}")
