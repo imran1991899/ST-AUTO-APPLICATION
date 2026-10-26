@@ -696,8 +696,8 @@ if nav_selection == "1. Main Page":
 
         st.markdown("---")
 
-        description = st.text_area("📄 Project Description & Objectives", value=st.session_state.description, height=150)
-        st.session_state.description = description
+        ##description = st.text_area("📄 Project Description & Objectives", value=st.session_state.description, height=150)
+        ##st.session_state.description = description
 
         st.markdown("---")
         st.subheader("📋 Application Sections (Bahagian A - G)")
