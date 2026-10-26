@@ -323,7 +323,6 @@ defaults = {
     "no_lot": "",
     "hak_milik": "",
     "kedudukan_premis": "",
-    "description": "",
     "tarikh_mulatugas_count": 1,
     "evcs_models": [
         {
@@ -1402,7 +1401,7 @@ if nav_selection == "1. Main Page":
                             "Taman / Tempat", "Jalan", "No. Lot / No. Unit / Blok / PT", "Hak Milik Bangunan", "Kedudukan Premis",
                             "Brand / Model", "No. of Units", "Rated Input Power (kW AC)", "Max. Charging Power",
                             "Mode of Charging", "Connector Type", "Output Cable Size", "No. of Charging Bays",
-                            "GPS Latitude", "GPS Longitude", "Description",
+                            "GPS Latitude", "GPS Longitude",
                             "EVCS All Models (JSON)",
                             "Bahagian C Senarai Semak (JSON)", "Bahagian C Orang Kompeten (JSON)",
                             "Bahagian E Maklumat Permohonan (JSON)",
@@ -1433,7 +1432,6 @@ if nav_selection == "1. Main Page":
                             "no_lot": "",
                             "hak_milik": "",
                             "kedudukan_premis": "",
-                            "description": "",
                             "tarikh_mulatugas_count": 1,
                             "evcs_models": [
                                 {
