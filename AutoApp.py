@@ -689,7 +689,7 @@ if nav_selection == "1. Main Page":
                                 st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
                                 st.rerun()
 
-            st.markdown("---")
+            ##st.markdown("---")
 
         # GPS Coordinate Latitude Longitude & Map Dialog
         st.markdown("GPS Coordinate Latitude Longitude")
