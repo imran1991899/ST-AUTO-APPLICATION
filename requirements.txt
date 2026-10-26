@@ -12,3 +12,5 @@ streamlit-javascript
 pydrive2
 gspread
 pytz
+folium
+streamlit-folium
