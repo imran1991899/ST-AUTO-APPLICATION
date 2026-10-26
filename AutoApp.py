@@ -381,10 +381,10 @@ if nav_selection == "1. Main Page":
             with st.container(border=True):
                 ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
-                    if os.path.exists("imgEVC/DC_120.png"):
-                        st.image("imgEVC/DC_120.png", width=90)
+                    if os.path.exists("DC_120.png"):
+                        st.image("DC_120.png", width=90)
                     else:
-                        st.warning("imgEVC/DC_120.png not found")
+                        st.warning("DC_120.png not found")
                 if st.button("Guorui / GRD08-120SDE", use_container_width=True, key="btn_120"):
                     select_model_120()
                     st.rerun()
@@ -393,10 +393,10 @@ if nav_selection == "1. Main Page":
             with st.container(border=True):
                 ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
-                    if os.path.exists("imgEVC/DC_240.png"):
-                        st.image("imgEVC/DC_240.png", width=90)
+                    if os.path.exists("DC_240.png"):
+                        st.image("DC_240.png", width=90)
                     else:
-                        st.warning("imgEVC/DC_240.png not found")
+                        st.warning("DC_240.png not found")
                 if st.button("Guorui / GRD08-240SDE", use_container_width=True, key="btn_240"):
                     select_model_240()
                     st.rerun()
@@ -405,10 +405,10 @@ if nav_selection == "1. Main Page":
             with st.container(border=True):
                 ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
-                    if os.path.exists("imgEVC/add.png"):
-                        st.image("imgEVC/add.png", width=90)
+                    if os.path.exists("add.png"):
+                        st.image("add.png", width=90)
                     else:
-                        st.warning("imgEVC/add.png not found")
+                        st.warning("add.png not found")
                 if st.button("+ Add Other Model", use_container_width=True, key="btn_add"):
                     select_model_add()
                     st.rerun()
