@@ -31,7 +31,7 @@ except ImportError:
     MALAYSIA_ZONE = pytz.timezone("Asia/Kuala_Lumpur")
 
 # --------- Page Setup ---------
-st.set_page_config(page_title="Application Portal", layout="wide")
+st.set_page_config(page_title="Application Portal ST", layout="wide")
 
 # --------- Custom CSS for Border Cards around Images & Stepper Buttons ---------
 st.markdown("""
@@ -494,7 +494,7 @@ nav_selection = st.sidebar.radio(
 
 # --------- 1. MAIN PAGE ---------
 if nav_selection == "1. Main Page":
-    st.title("Application Portal")
+    st.title("Application Portal ST")
     
     col1, col2 = st.columns(2)
     with col1:
