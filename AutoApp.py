@@ -280,11 +280,18 @@ def append_row_to_gsheet(sheet_id, values, header):
 # --------- Initialize Session State ---------
 defaults = {
     "app_mode": "none",
-    "project_title": "",
-    "location": "",
-    "total_bay": "",
-    "total_evcs": "",
-    "evcs_type": "AC",
+    "project_name": "",
+    "negeri": "",
+    "pbt": "",
+    "poskod": "",
+    "daerah": "",
+    "mukim": "",
+    "kawasan": "",
+    "taman_tempat": "",
+    "jalan": "",
+    "no_lot": "",
+    "hak_milik": "",
+    "kedudukan_premis": "",
     "brand_model": "",
     "no_of_units": "",
     "rated_input_power": "",
@@ -327,28 +334,55 @@ if nav_selection == "1. Main Page":
     # ----- NEW APPLICATION FORM -----
     if st.session_state.app_mode == "new":
         st.subheader("📝 New Application Submission")
+        st.markdown("#### Project Information")
 
-        project_title = st.text_input("📋 Project / Request Title", value=st.session_state.project_title)
-        st.session_state.project_title = project_title
+        project_name = st.text_input("Project name", value=st.session_state.project_name)
+        st.session_state.project_name = project_name
 
-        location = st.text_input("📍 Location", value=st.session_state.location)
-        st.session_state.location = location
+        col_pi1, col_pi2, col_pi3 = st.columns(3)
+        with col_pi1:
+            negeri_options = ["--- Sila pilih ---", "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Pulau Pinang", "Sabah", "Sarawak", "Selangor", "Terengganu", "W.P. Kuala Lumpur", "W.P. Labuan", "W.P. Putrajaya"]
+            negeri = st.selectbox("Negeri", negeri_options, index=negeri_options.index(st.session_state.negeri) if st.session_state.negeri in negeri_options else 0)
+            st.session_state.negeri = negeri
+        with col_pi2:
+            pbt_options = ["--- Sila pilih ---", "DBKL", "MBPJ", "MBSA", "MPSJ", "MPKJ", "MBMB", "MBJB", "MBI", "DBKK", "MBMB"]
+            pbt = st.selectbox("PBT", pbt_options, index=pbt_options.index(st.session_state.pbt) if st.session_state.pbt in pbt_options else 0)
+            st.session_state.pbt = pbt
+        with col_pi3:
+            poskod = st.text_input("Poskod", value=st.session_state.poskod)
+            st.session_state.poskod = poskod
 
-        col_ev1, col_ev2 = st.columns(2)
-        with col_ev1:
-            total_bay = st.text_input("🅿️ Total Bay", value=st.session_state.total_bay)
-            st.session_state.total_bay = total_bay
-        with col_ev2:
-            total_evcs = st.text_input("🔌 Total No. EVCS", value=st.session_state.total_evcs)
-            st.session_state.total_evcs = total_evcs
+        col_pi4, col_pi5, col_pi6 = st.columns(3)
+        with col_pi4:
+            daerah = st.text_input("Daerah", value=st.session_state.daerah)
+            st.session_state.daerah = daerah
+        with col_pi5:
+            mukim = st.text_input("Mukim", value=st.session_state.mukim)
+            st.session_state.mukim = mukim
+        with col_pi6:
+            kawasan = st.text_input("Kawasan", value=st.session_state.kawasan)
+            st.session_state.kawasan = kawasan
 
-        evcs_types = ["AC", "DC", "AC & DC Hybrid"]
-        evcs_type = st.selectbox(
-            "⚡ EVCS TYPE",
-            evcs_types,
-            index=evcs_types.index(st.session_state.evcs_type) if st.session_state.evcs_type in evcs_types else 0
-        )
-        st.session_state.evcs_type = evcs_type
+        col_pi7, col_pi8, col_pi9 = st.columns(3)
+        with col_pi7:
+            taman_tempat = st.text_input("Taman / Tempat", value=st.session_state.taman_tempat)
+            st.session_state.taman_tempat = taman_tempat
+        with col_pi8:
+            jalan = st.text_input("Jalan", value=st.session_state.jalan)
+            st.session_state.jalan = jalan
+        with col_pi9:
+            no_lot = st.text_input("No. Lot / No. Unit / Blok / PT", value=st.session_state.no_lot)
+            st.session_state.no_lot = no_lot
+
+        col_pi10, col_pi11 = st.columns(2)
+        with col_pi10:
+            hak_milik_options = ["--- Sila pilih ---", "MILIK SENDIRI", "SEWA"]
+            hak_milik = st.selectbox("Hak Milik Bangunan", hak_milik_options, index=hak_milik_options.index(st.session_state.hak_milik) if st.session_state.hak_milik in hak_milik_options else 0)
+            st.session_state.hak_milik = hak_milik
+        with col_pi11:
+            kedudukan_options = ["--- Sila pilih ---", "LOT TENGAH", "LOT TEPI", "PERSENDIRIAN"]
+            kedudukan_premis = st.selectbox("Kedudukan Premis", kedudukan_options, index=kedudukan_options.index(st.session_state.kedudukan_premis) if st.session_state.kedudukan_premis in kedudukan_options else 0)
+            st.session_state.kedudukan_premis = kedudukan_premis
 
         # --- Side-by-Side EVCS Technical Specifications ---
         st.markdown("---")
@@ -1014,7 +1048,7 @@ if nav_selection == "1. Main Page":
         with tab_f:
             st.markdown("### 📌 Bahagian F : PENGAKUAN PEMOHON")
 
-            display_applicant = project_title if project_title else "PEMOHON"
+            display_applicant = project_name if project_name else "PEMOHON"
 
             f_check1 = st.checkbox(
                 f"*Saya {display_applicant}, mengaku bahawa maklumat-maklumat yang terkandung di dalam permohonan ini adalah benar dan kenyataan-kenyataan adalah betul dan saya sedar adalah menjadi suatu kesalahan di bawah seksyen 8 Akta Bekalan Elektrik 1990 jika maklumat-maklumat yang diberikan itu adalah palsu.",
@@ -1065,12 +1099,8 @@ if nav_selection == "1. Main Page":
         with st.form(key="submit_form"):
             submit = st.form_submit_button("✅ Submit Application")
             if submit:
-                if not project_title.strip():
-                    st.warning("❗ Please provide a project title.")
-                elif not location.strip():
-                    st.warning("❗ Please provide a location.")
-                elif not description.strip():
-                    st.warning("❗ Please provide a project description.")
+                if not project_name.strip():
+                    st.warning("❗ Please provide a project name.")
                 elif not (f_check1 and f_check2 and f_check3):
                     st.warning("❗ Please complete all declarations in Bahagian F before submitting.")
                 else:
@@ -1078,21 +1108,7 @@ if nav_selection == "1. Main Page":
                         timestamp = datetime.now(MALAYSIA_ZONE).strftime("%Y-%m-%d %H:%M:%S")
 
                         # Automatically create or use the dedicated project subfolder inside FOLDER_ID
-                        project_folder_id = get_or_create_project_folder(project_title, FOLDER_ID)
-
-                        # Process selected 'Sistem Agihan' options
-                        sistem_agihan_selected = []
-                        if sistem_agihan_pendawaian: sistem_agihan_selected.append("Pendawaian dalaman")
-                        if sistem_agihan_kabel: sistem_agihan_selected.append("Kabel bawah tanah")
-                        if sistem_agihan_talian: sistem_agihan_selected.append("Talian atas")
-                        if sistem_agihan_lain_check and sistem_agihan_lain:
-                            sistem_agihan_selected.append(f"Lain-lain: {sistem_agihan_lain}")
-
-                        final_punca_bekalan = punca_bekalan
-                        if punca_bekalan == "Lain-lain (Sila nyatakan)" and punca_bekalan_lain:
-                            final_punca_bekalan = f"Lain-lain: {punca_bekalan_lain}"
-
-                        pembekalan_json = json.dumps(edited_pembekalan_df.to_dict(orient="records"))
+                        project_folder_id = get_or_create_project_folder(project_name, FOLDER_ID)
 
                         # Process Bahagian C Uploads & Checklist (stored in project folder)
                         bahagian_c_summary = {}
@@ -1194,38 +1210,23 @@ if nav_selection == "1. Main Page":
                         bahagian_g_json = json.dumps(bahagian_g_data)
 
                         row = [
-                            timestamp, project_title, location, total_bay, total_evcs, evcs_type,
+                            timestamp, project_name, negeri, pbt, poskod, daerah, mukim, kawasan,
+                            taman_tempat, jalan, no_lot, hak_milik, kedudukan_premis,
                             brand_model, no_of_units, rated_input_power, max_charging_power,
                             mode_of_charging, connector_type, output_cable_size, no_of_charging_bays,
                             gps_lat, gps_lon, description,
-                            bahagian_a_info,
-                            "Pengagihan" if pengagihan_check else "",
-                            jumlah_keupayaan, kehendak_maksimum, final_punca_bekalan,
-                            tarif_kehendak_max, tarif_puncak, tarif_luar_puncak,
-                            jumlah_tenaga_sebulan, bilangan_incomers, nama_pencawang,
-                            voltan_punca_bekalan, voltan_pengagihan,
-                            ", ".join(sistem_agihan_selected), loji_janakuasa, caj_sambungan,
-                            pembekalan_json,
                             c_checklist_json, c_competent_json,
-                            bahagian_d_info,
                             bahagian_e_json,
                             bahagian_f_json, bahagian_g_json
                         ]
 
                         header = [
-                            "Timestamp", "Project Title", "Location", "Total Bay", "Total EVCS", "EVCS Type",
+                            "Timestamp", "Project Name", "Negeri", "PBT", "Poskod", "Daerah", "Mukim", "Kawasan",
+                            "Taman / Tempat", "Jalan", "No. Lot / No. Unit / Blok / PT", "Hak Milik Bangunan", "Kedudukan Premis",
                             "Brand / Model", "No. of Units", "Rated Input Power (kW AC)", "Max. Charging Power",
                             "Mode of Charging", "Connector Type", "Output Cable Size", "No. of Charging Bays",
                             "GPS Latitude", "GPS Longitude", "Description",
-                            "Bahagian A Info",
-                            "Bahagian B - Aktiviti", "Jumlah Keupayaan (kW)", "Kehendak Maksimum (kW)", "Punca Bekalan",
-                            "Tarif Caj Kehendak Max (RM/kW)", "Tarif Caj Puncak (sen/kWj)", "Tarif Caj Luar Puncak (sen/kWj)",
-                            "Jumlah Tenaga Sebulan (kWj)", "Bilangan Incomers", "Nama Pencawang",
-                            "Voltan Punca Bekalan (kV)", "Voltan Pengagihan (kV)",
-                            "Sistem Agihan", "Loji Janakuasa Tunggusedia (kW)", "Caj Sambungan TNB/SESB (RM)",
-                            "Pembekalan Table Data (JSON)",
                             "Bahagian C Senarai Semak (JSON)", "Bahagian C Orang Kompeten (JSON)",
-                            "Bahagian D Info",
                             "Bahagian E Maklumat Permohonan (JSON)",
                             "Bahagian F Pengakuan (JSON)", "Bahagian G Pengesahan (JSON)"
                         ]
@@ -1234,11 +1235,18 @@ if nav_selection == "1. Main Page":
                         append_row_to_gsheet(gsheet_id, row, header)
 
                         st.session_state.update({
-                            "project_title": "",
-                            "location": "",
-                            "total_bay": "",
-                            "total_evcs": "",
-                            "evcs_type": "AC",
+                            "project_name": "",
+                            "negeri": "",
+                            "pbt": "",
+                            "poskod": "",
+                            "daerah": "",
+                            "mukim": "",
+                            "kawasan": "",
+                            "taman_tempat": "",
+                            "jalan": "",
+                            "no_lot": "",
+                            "hak_milik": "",
+                            "kedudukan_premis": "",
                             "brand_model": "",
                             "no_of_units": "",
                             "rated_input_power": "",
