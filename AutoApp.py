@@ -334,6 +334,25 @@ if nav_selection == "1. Main Page":
         st.markdown("---")
         st.markdown("#### ⚡ EVCS Technical Specifications")
 
+        col_img1, col_img2, col_img3 = st.columns(3)
+        with col_img1:
+            if os.path.exists("imgEVC/DC_120.png"):
+                st.image("imgEVC/DC_120.png", caption="Guorui / GRD08-120SDE", use_container_width=True)
+            else:
+                st.warning("imgEVC/DC_120.png not found")
+        with col_img2:
+            if os.path.exists("imgEVC/DC_240.png"):
+                st.image("imgEVC/DC_240.png", caption="Guorui / GRD08-240SDE", use_container_width=True)
+            else:
+                st.warning("imgEVC/DC_240.png not found")
+        with col_img3:
+            if os.path.exists("imgEVC/add.png"):
+                st.image("imgEVC/add.png", caption="[+] Add other model free text", use_container_width=True)
+            else:
+                st.warning("imgEVC/add.png not found")
+
+        st.markdown("---")
+
         col_s1, col_s2 = st.columns(2)
 
         with col_s1:
@@ -360,7 +379,7 @@ if nav_selection == "1. Main Page":
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 120 kW / DC</p>", unsafe_allow_html=True)
 
             connector_type = st.text_input("Connector Type", value=st.session_state.connector_type)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 8 × CCS 2</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: 15px;'>Example: 8 × CCS 2</p>", unsafe_allow_html=True)
 
             no_of_charging_bays = st.text_input("No. of Charging Bays", value=st.session_state.no_of_charging_bays)
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 10</p>", unsafe_allow_html=True)
