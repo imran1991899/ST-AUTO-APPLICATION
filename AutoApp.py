@@ -16,6 +16,12 @@ from googleapiclient.http import MediaIoBaseUpload
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
+# ReportLab imports for PDF generation
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image as RLImage, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
 # Malaysia timezone setup
 try:
     from zoneinfo import ZoneInfo
@@ -283,6 +289,142 @@ def append_row_to_gsheet(sheet_id, values, header):
         insertDataOption="INSERT_ROWS",
         body={"values": [values]},
     ).execute()
+
+# --------- PDF Generation Helper ---------
+def generate_project_summary_pdf(evcs_models):
+    """Generates a PDF bytes buffer containing the Charger Specification Table matching the provided layout."""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),
+        rightMargin=20,
+        leftMargin=20,
+        topMargin=20,
+        bottomMargin=20
+    )
+    styles = getSampleStyleSheet()
+
+    header_style = ParagraphStyle(
+        'HeaderStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        alignment=1,
+        textColor=colors.black
+    )
+    cell_style = ParagraphStyle(
+        'CellStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        alignment=1,
+        textColor=colors.black
+    )
+    cell_bold_style = ParagraphStyle(
+        'CellBoldStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=9,
+        alignment=0,
+        textColor=colors.black
+    )
+
+    num_models = len(evcs_models)
+    
+    # Define row labels
+    spec_labels = [
+        "Brand / Model",
+        "No. of Units",
+        "Rated Input Power (kW AC)",
+        "Max. Charging / Output Power\n(AC or DC)",
+        "Mode of Charging",
+        "Connector Type",
+        "Output Cable Size / Type\n(Charging Cable)",
+        "No. of Charging Bays",
+        "GPS Coordinate Latitude",
+        "GPS Coordinate Longitude"
+    ]
+
+    # Header Row
+    top_header = [Paragraph("<b>PROJECT SUMMARY TABLE (CHARGER SPECIFICATION TABLE)</b>", ParagraphStyle('TitleStyle', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, alignment=1))] + [""] * (num_models + 1)
+    
+    col_headers = [Paragraph("Specification", cell_bold_style)]
+    for m in evcs_models:
+        brand_name = m.get("brand_model", "").strip() or "EVCS Model"
+        col_headers.append(Paragraph(f"<b>{brand_name}</b>", header_style))
+    col_headers.append(Paragraph("PICTURE", header_style))
+
+    table_data = [top_header, col_headers]
+
+    # Populate rows
+    for spec_label in spec_labels:
+        row = [Paragraph(spec_label.replace('\n', '<br/>'), cell_bold_style)]
+        for m in evcs_models:
+            if spec_label == "Brand / Model":
+                val = m.get("brand_model", "")
+            elif spec_label == "No. of Units":
+                val = m.get("no_of_units", "")
+            elif spec_label == "Rated Input Power (kW AC)":
+                val = m.get("rated_input_power", "")
+            elif "Max. Charging" in spec_label:
+                val = m.get("max_charging_power", "")
+            elif spec_label == "Mode of Charging":
+                val = m.get("mode_of_charging", "")
+            elif spec_label == "Connector Type":
+                val = m.get("connector_type", "")
+            elif "Output Cable" in spec_label:
+                val = m.get("output_cable_size", "")
+            elif spec_label == "No. of Charging Bays":
+                val = m.get("no_of_charging_bays", "")
+            elif spec_label == "GPS Coordinate Latitude":
+                raw_gps = m.get("gps_lat", "")
+                val = raw_gps.split(",")[0].strip() if "," in raw_gps else raw_gps
+            elif spec_label == "GPS Coordinate Longitude":
+                raw_gps = m.get("gps_lat", "")
+                val = raw_gps.split(",")[1].strip() if "," in raw_gps else m.get("gps_lon", "")
+            else:
+                val = ""
+            row.append(Paragraph(str(val).replace('\n', '<br/>'), cell_style))
+        row.append("")  # Empty for merged picture column
+        table_data.append(row)
+
+    # Attach picture if available
+    picture_element = ""
+    for m in evcs_models:
+        brand = m.get("brand_model", "")
+        if "120" in brand and os.path.exists("DC_120.png"):
+            picture_element = RLImage("DC_120.png", width=180, height=330)
+            break
+        elif "240" in brand and os.path.exists("DC_240.png"):
+            picture_element = RLImage("DC_240.png", width=180, height=330)
+            break
+    if not picture_element and os.path.exists("DC_120.png"):
+        picture_element = RLImage("DC_120.png", width=180, height=330)
+
+    if picture_element:
+        table_data[2][-1] = picture_element
+
+    # Column Widths
+    spec_col_w = 180
+    pic_col_w = 200
+    avail_w = 752 - spec_col_w - pic_col_w
+    model_col_w = avail_w / num_models if num_models > 0 else avail_w
+    col_widths = [spec_col_w] + [model_col_w] * num_models + [pic_col_w]
+
+    t_style = [
+        ('SPAN', (0, 0), (num_models + 1, 0)),
+        ('BACKGROUND', (0, 0), (num_models + 1, 0), colors.white),
+        ('BACKGROUND', (0, 1), (num_models + 1, 1), colors.HexColor('#E0E0E0')),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('SPAN', (num_models + 1, 2), (num_models + 1, len(table_data) - 1)),
+    ]
+
+    t = Table(table_data, colWidths=col_widths)
+    t.setStyle(TableStyle(t_style))
+    doc.build([t])
+    return buffer.getvalue()
 
 # --------- Initialize Session State ---------
 defaults = {
@@ -1302,6 +1444,11 @@ if nav_selection == "1. Main Page":
                         # Process EVCS models JSON
                         evcs_models_json = json.dumps(st.session_state.evcs_models)
 
+                        # Generate Project Summary Table PDF & Upload to Drive
+                        pdf_bytes = generate_project_summary_pdf(st.session_state.evcs_models)
+                        pdf_filename = f"{project_name}_PROJECT SUMMARY (AS PER TABLE).pdf"
+                        pdf_link, _ = gdrive_upload_file(pdf_bytes, pdf_filename, "application/pdf", project_folder_id)
+
                         # Process Bahagian E Data
                         kat_penggunaan_list = []
                         if e_kat_pengilangan: kat_penggunaan_list.append("Pengilangan / Industri")
@@ -1364,6 +1511,7 @@ if nav_selection == "1. Main Page":
                             primary_model.get("output_cable_size", ""), primary_model.get("no_of_charging_bays", ""),
                             primary_model.get("gps_lat", ""), primary_model.get("gps_lon", ""), description,
                             evcs_models_json,
+                            pdf_link,
                             c_checklist_json, c_competent_json,
                             bahagian_e_json,
                             bahagian_f_json, bahagian_g_json
@@ -1376,6 +1524,7 @@ if nav_selection == "1. Main Page":
                             "Mode of Charging", "Connector Type", "Output Cable Size", "No. of Charging Bays",
                             "GPS Latitude", "GPS Longitude", "Description",
                             "EVCS All Models (JSON)",
+                            "Project Summary PDF Link",
                             "Bahagian C Senarai Semak (JSON)", "Bahagian C Orang Kompeten (JSON)",
                             "Bahagian E Maklumat Permohonan (JSON)",
                             "Bahagian F Pengakuan (JSON)", "Bahagian G Pengesahan (JSON)"
