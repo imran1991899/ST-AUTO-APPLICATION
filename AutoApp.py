@@ -27,20 +27,6 @@ except ImportError:
 # --------- Page Setup ---------
 st.set_page_config(page_title="Application Portal", layout="wide")
 
-# --------- Custom CSS for Border Cards around Images ---------
-st.markdown("""
-<style>
-.evc-card {
-    border: 2px solid #008080;
-    border-radius: 10px;
-    padding: 10px;
-    text-align: center;
-    background-color: #0e1117;
-    margin-bottom: 10px;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # --------- Google Drive Folder ID ---------
 FOLDER_ID = "1edCJklkyUp4UtZl3zOh-HNsYOMmw8hsc"
 
@@ -348,6 +334,17 @@ if nav_selection == "1. Main Page":
         st.markdown("---")
         st.markdown("#### ⚡ EVCS Technical Specifications")
 
+        st.markdown("""
+        <style>
+        [data-testid="stVerticalBlock"] [data-testid="stContainer"] {
+            border: 2px solid #008080 !important;
+            border-radius: 10px !important;
+            background-color: #0e1117 !important;
+            padding: 10px !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
         def select_model_120():
             st.session_state.brand_model = "Guorui / GRD08-120SDE"
             st.session_state.max_charging_power = "120 kW / DC"
@@ -372,52 +369,40 @@ if nav_selection == "1. Main Page":
         col_img1, col_img2, col_img3 = st.columns(3)
 
         with col_img1:
-            st.markdown("<div class='evc-card'>", unsafe_allow_html=True)
-            ic1, ic2, ic3 = st.columns([1, 2, 1])
-            with ic2:
-                if os.path.exists("DC_120.png"):
-                    if st.button("🖼️", key="img_btn_120", help="Click to select Guorui 120kW"):
-                        select_model_120()
-                        st.rerun()
-                    st.image("DC_120.png", width=90)
-                else:
-                    st.warning("DC_120.png not found")
-            st.markdown("</div>", unsafe_allow_html=True)
-            if st.button("Guorui / GRD08-120SDE", use_container_width=True, key="btn_120"):
-                select_model_120()
-                st.rerun()
+            with st.container(border=True):
+                ic1, ic2, ic3 = st.columns([1, 2, 1])
+                with ic2:
+                    if os.path.exists("DC_120.png"):
+                        st.image("DC_120.png", width=90)
+                    else:
+                        st.warning("DC_120.png not found")
+                if st.button("Guorui / GRD08-120SDE", use_container_width=True, key="btn_120"):
+                    select_model_120()
+                    st.rerun()
 
         with col_img2:
-            st.markdown("<div class='evc-card'>", unsafe_allow_html=True)
-            ic1, ic2, ic3 = st.columns([1, 2, 1])
-            with ic2:
-                if os.path.exists("DC_240.png"):
-                    if st.button("🖼️", key="img_btn_240", help="Click to select Guorui 240kW"):
-                        select_model_240()
-                        st.rerun()
-                    st.image("DC_240.png", width=90)
-                else:
-                    st.warning("DC_240.png not found")
-            st.markdown("</div>", unsafe_allow_html=True)
-            if st.button("Guorui / GRD08-240SDE", use_container_width=True, key="btn_240"):
-                select_model_240()
-                st.rerun()
+            with st.container(border=True):
+                ic1, ic2, ic3 = st.columns([1, 2, 1])
+                with ic2:
+                    if os.path.exists("DC_240.png"):
+                        st.image("DC_240.png", width=90)
+                    else:
+                        st.warning("DC_240.png not found")
+                if st.button("Guorui / GRD08-240SDE", use_container_width=True, key="btn_240"):
+                    select_model_240()
+                    st.rerun()
 
         with col_img3:
-            st.markdown("<div class='evc-card'>", unsafe_allow_html=True)
-            ic1, ic2, ic3 = st.columns([1, 2, 1])
-            with ic2:
-                if os.path.exists("add.png"):
-                    if st.button("🖼️", key="img_btn_add", help="Click to add other model"):
-                        select_model_add()
-                        st.rerun()
-                    st.image("add.png", width=90)
-                else:
-                    st.warning("add.png not found")
-            st.markdown("</div>", unsafe_allow_html=True)
-            if st.button("+ Add Other Model", use_container_width=True, key="btn_add"):
-                select_model_add()
-                st.rerun()
+            with st.container(border=True):
+                ic1, ic2, ic3 = st.columns([1, 2, 1])
+                with ic2:
+                    if os.path.exists("add.png"):
+                        st.image("add.png", width=90)
+                    else:
+                        st.warning("add.png not found")
+                if st.button("+ Add Other Model", use_container_width=True, key="btn_add"):
+                    select_model_add()
+                    st.rerun()
 
         st.markdown("---")
 
