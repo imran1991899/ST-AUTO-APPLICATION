@@ -337,19 +337,42 @@ if nav_selection == "1. Main Page":
         col_img1, col_img2, col_img3 = st.columns(3)
         with col_img1:
             if os.path.exists("imgEVC/DC_120.png"):
-                st.image("imgEVC/DC_120.png", caption="Guorui / GRD08-120SDE", use_container_width=True)
+                st.image("imgEVC/DC_120.png", use_container_width=True)
             else:
                 st.warning("imgEVC/DC_120.png not found")
+            if st.button("Select Guorui 120kW", use_container_width=True):
+                st.session_state.brand_model = "Guorui / GRD08-120SDE"
+                st.session_state.max_charging_power = "120 kW / DC"
+                st.session_state.rated_input_power = "133 kW AC"
+                st.session_state.mode_of_charging = "Mode 4"
+                st.session_state.connector_type = "CCS 2"
+                st.rerun()
+
         with col_img2:
             if os.path.exists("imgEVC/DC_240.png"):
-                st.image("imgEVC/DC_240.png", caption="Guorui / GRD08-240SDE", use_container_width=True)
+                st.image("imgEVC/DC_240.png", use_container_width=True)
             else:
                 st.warning("imgEVC/DC_240.png not found")
+            if st.button("Select Guorui 240kW", use_container_width=True):
+                st.session_state.brand_model = "Guorui / GRD08-240SDE"
+                st.session_state.max_charging_power = "240 kW / DC"
+                st.session_state.rated_input_power = "266 kW AC"
+                st.session_state.mode_of_charging = "Mode 4"
+                st.session_state.connector_type = "CCS 2"
+                st.rerun()
+
         with col_img3:
             if os.path.exists("imgEVC/add.png"):
-                st.image("imgEVC/add.png", caption="[+] Add other model free text", use_container_width=True)
+                st.image("imgEVC/add.png", use_container_width=True)
             else:
                 st.warning("imgEVC/add.png not found")
+            if st.button("Add Other Model", use_container_width=True):
+                st.session_state.brand_model = ""
+                st.session_state.max_charging_power = ""
+                st.session_state.rated_input_power = ""
+                st.session_state.mode_of_charging = ""
+                st.session_state.connector_type = ""
+                st.rerun()
 
         st.markdown("---")
 
