@@ -402,19 +402,33 @@ if nav_selection == "1. Main Page":
 
         def select_model_preset(model_idx, preset_type):
             if preset_type == "120":
-                st.session_state.evcs_models[model_idx]["brand_model"] = "Guorui / GRD08-120SDE"
-                st.session_state.evcs_models[model_idx]["max_charging_power"] = "120 kW / DC"
-                st.session_state.evcs_models[model_idx]["rated_input_power"] = "133 kW AC"
-                st.session_state.evcs_models[model_idx]["mode_of_charging"] = "Mode 4"
-                st.session_state.evcs_models[model_idx]["connector_type"] = "CCS 2"
+                brand_val = "Guorui / GRD08-120SDE"
+                mcp_val = "120 kW / DC"
+                rip_val = "133 kW AC"
+                moc_val = "Mode 4"
+                conn_val = "CCS 2"
             elif preset_type == "240":
-                st.session_state.evcs_models[model_idx]["brand_model"] = "Guorui / GRD08-240SDE"
-                st.session_state.evcs_models[model_idx]["max_charging_power"] = "240 kW / DC"
-                st.session_state.evcs_models[model_idx]["rated_input_power"] = "266 kW AC"
-                st.session_state.evcs_models[model_idx]["mode_of_charging"] = "Mode 4"
-                st.session_state.evcs_models[model_idx]["connector_type"] = "CCS 2"
+                brand_val = "Guorui / GRD08-240SDE"
+                mcp_val = "240 kW / DC"
+                rip_val = "266 kW AC"
+                moc_val = "Mode 4"
+                conn_val = "CCS 2"
 
-        # Preset selection buttons for the active (latest un-minimized) model
+            # 1. Update internal state dictionary
+            st.session_state.evcs_models[model_idx]["brand_model"] = brand_val
+            st.session_state.evcs_models[model_idx]["max_charging_power"] = mcp_val
+            st.session_state.evcs_models[model_idx]["rated_input_power"] = rip_val
+            st.session_state.evcs_models[model_idx]["mode_of_charging"] = moc_val
+            st.session_state.evcs_models[model_idx]["connector_type"] = conn_val
+
+            # 2. Synchronize directly with Streamlit widget keys to instantly auto-fill inputs
+            st.session_state[f"brand_model_{model_idx}"] = brand_val
+            st.session_state[f"input_max_charging_power_{model_idx}"] = mcp_val
+            st.session_state[f"input_rated_input_power_{model_idx}"] = rip_val
+            st.session_state[f"mode_of_charging_{model_idx}"] = moc_val
+            st.session_state[f"connector_type_{model_idx}"] = conn_val
+
+        # Active (latest un-minimized or currently edited) model index
         active_idx = len(st.session_state.evcs_models) - 1
         col_img1, col_img2, col_img3 = st.columns(3)
 
@@ -468,12 +482,19 @@ if nav_selection == "1. Main Page":
 
         st.markdown("---")
 
-        # Render all EVCS model forms (minimized ones as expanders, active one open)
+        # Function to delete a model type safely
+        def remove_evcs_model(model_idx):
+            if len(st.session_state.evcs_models) > 1:
+                st.session_state.evcs_models.pop(model_idx)
+                st.rerun()
+
+        # Render all EVCS model forms
         for idx, model in enumerate(st.session_state.evcs_models):
-            m_title = model['brand_model'] if model['brand_model'] else f"Model Type {idx + 1} (New)"
+            # Display exact selected brand/model name or fallback title
+            exact_model_name = model['brand_model'].strip() if model['brand_model'] and model['brand_model'].strip() else f"Model Type {idx + 1} (New)"
             
             if model["is_minimized"]:
-                with st.expander(f"📦 Model {idx + 1}: {m_title} (Click to expand)", expanded=False):
+                with st.expander(f"📦 {exact_model_name} (Click to expand)", expanded=False):
                     c_min1, c_min2 = st.columns(2)
                     with c_min1:
                         st.write(f"**Brand / Model:** {model['brand_model'] or '-'}")
@@ -486,12 +507,23 @@ if nav_selection == "1. Main Page":
                         st.write(f"**Connector Type:** {model['connector_type'] or '-'}")
                         st.write(f"**No. of Charging Bays:** {model['no_of_charging_bays'] or '-'}")
                     
-                    if st.button(f"✏️ Edit Model {idx + 1}", key=f"edit_model_{idx}"):
-                        st.session_state.evcs_models[idx]["is_minimized"] = False
-                        st.rerun()
+                    btn_col1, btn_col2 = st.columns([1, 1])
+                    with btn_col1:
+                        if st.button(f"✏️ Edit Model {idx + 1}", key=f"edit_model_{idx}"):
+                            st.session_state.evcs_models[idx]["is_minimized"] = False
+                            st.rerun()
+                    with btn_col2:
+                        if len(st.session_state.evcs_models) > 1:
+                            if st.button(f"🗑️ Remove Model {idx + 1}", key=f"remove_min_model_{idx}"):
+                                remove_evcs_model(idx)
             else:
-                if len(st.session_state.evcs_models) > 1:
-                    st.markdown(f"#### ⚙️ Active Model Type {idx + 1}")
+                col_title, col_del = st.columns([4, 1])
+                with col_title:
+                    st.markdown(f"#### ⚙️ Active Model: {exact_model_name}")
+                with col_del:
+                    if len(st.session_state.evcs_models) > 1:
+                        if st.button("🗑️ Remove Model", key=f"remove_active_model_{idx}"):
+                            remove_evcs_model(idx)
 
                 col_s1, col_s2 = st.columns(2)
 
@@ -520,6 +552,7 @@ if nav_selection == "1. Main Page":
                                 else:
                                     new_val = "0"
                                 st.session_state.evcs_models[idx]["rated_input_power"] = new_val
+                                st.session_state[f"input_rated_input_power_{idx}"] = new_val
                                 st.rerun()
                         with b_p1:
                             if st.button("+", key=f"plus_rip_{idx}"):
@@ -532,6 +565,7 @@ if nav_selection == "1. Main Page":
                                 else:
                                     new_val = "1"
                                 st.session_state.evcs_models[idx]["rated_input_power"] = new_val
+                                st.session_state[f"input_rated_input_power_{idx}"] = new_val
                                 st.rerun()
 
                     mode_of_charging = st.text_input("Mode of Charging", value=model["mode_of_charging"], key=f"mode_of_charging_{idx}")
@@ -563,6 +597,7 @@ if nav_selection == "1. Main Page":
                                 else:
                                     new_val = "0"
                                 st.session_state.evcs_models[idx]["no_of_units"] = new_val
+                                st.session_state[f"input_no_of_units_{idx}"] = new_val
                                 st.rerun()
                         with b_p2:
                             if st.button("+", key=f"plus_nou_{idx}"):
@@ -575,6 +610,7 @@ if nav_selection == "1. Main Page":
                                 else:
                                     new_val = "1"
                                 st.session_state.evcs_models[idx]["no_of_units"] = new_val
+                                st.session_state[f"input_no_of_units_{idx}"] = new_val
                                 st.rerun()
 
                     # Max. Charging / Output Power with stepper buttons [-] [+]
@@ -597,6 +633,7 @@ if nav_selection == "1. Main Page":
                                 else:
                                     new_val = "0"
                                 st.session_state.evcs_models[idx]["max_charging_power"] = new_val
+                                st.session_state[f"input_max_charging_power_{idx}"] = new_val
                                 st.rerun()
                         with b_p3:
                             if st.button("+", key=f"plus_mcp_{idx}"):
@@ -609,6 +646,7 @@ if nav_selection == "1. Main Page":
                                 else:
                                     new_val = "1"
                                 st.session_state.evcs_models[idx]["max_charging_power"] = new_val
+                                st.session_state[f"input_max_charging_power_{idx}"] = new_val
                                 st.rerun()
 
                     connector_type = st.text_input("Connector Type", value=model["connector_type"], key=f"connector_type_{idx}")
@@ -635,6 +673,7 @@ if nav_selection == "1. Main Page":
                                 else:
                                     new_val = "0"
                                 st.session_state.evcs_models[idx]["no_of_charging_bays"] = new_val
+                                st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
                                 st.rerun()
                         with b_p4:
                             if st.button("+", key=f"plus_nocb_{idx}"):
@@ -647,6 +686,7 @@ if nav_selection == "1. Main Page":
                                 else:
                                     new_val = "1"
                                 st.session_state.evcs_models[idx]["no_of_charging_bays"] = new_val
+                                st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
                                 st.rerun()
 
             st.markdown("---")
