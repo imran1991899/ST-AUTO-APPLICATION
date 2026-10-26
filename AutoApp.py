@@ -543,7 +543,7 @@ if nav_selection == "1. Main Page":
                         folium.Marker([init_lat, init_lon], popup="Selected Location", tooltip="Pinned Location").add_to(m)
                         m.add_child(folium.LatLngPopup())
                         
-                        map_data = st_folium(m, width=700, height=500, key="map_popup_interactive")
+                        map_data = st_folium(m, use_container_width=True, height=500, key="map_popup_interactive")
                         
                         if map_data and map_data.get("last_clicked"):
                             clicked_lat = map_data["last_clicked"]["lat"]
