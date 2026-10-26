@@ -381,10 +381,10 @@ if nav_selection == "1. Main Page":
             with st.container(border=True):
                 ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
-                    if os.path.exists("DC_120.png"):
-                        st.image("DC_120.png", width=90)
+                    if os.path.exists("imgEVC/DC_120.png"):
+                        st.image("imgEVC/DC_120.png", width=90)
                     else:
-                        st.warning("DC_120.png not found")
+                        st.warning("imgEVC/DC_120.png not found")
                 if st.button("Guorui / GRD08-120SDE", use_container_width=True, key="btn_120"):
                     select_model_120()
                     st.rerun()
@@ -393,10 +393,10 @@ if nav_selection == "1. Main Page":
             with st.container(border=True):
                 ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
-                    if os.path.exists("DC_240.png"):
-                        st.image("DC_240.png", width=90)
+                    if os.path.exists("imgEVC/DC_240.png"):
+                        st.image("imgEVC/DC_240.png", width=90)
                     else:
-                        st.warning("DC_240.png not found")
+                        st.warning("imgEVC/DC_240.png not found")
                 if st.button("Guorui / GRD08-240SDE", use_container_width=True, key="btn_240"):
                     select_model_240()
                     st.rerun()
@@ -405,10 +405,10 @@ if nav_selection == "1. Main Page":
             with st.container(border=True):
                 ic1, ic2, ic3 = st.columns([1, 2, 1])
                 with ic2:
-                    if os.path.exists("add.png"):
-                        st.image("add.png", width=90)
+                    if os.path.exists("imgEVC/add.png"):
+                        st.image("imgEVC/add.png", width=90)
                     else:
-                        st.warning("add.png not found")
+                        st.warning("imgEVC/add.png not found")
                 if st.button("+ Add Other Model", use_container_width=True, key="btn_add"):
                     select_model_add()
                     st.rerun()
@@ -455,7 +455,7 @@ if nav_selection == "1. Main Page":
             output_cable_size = st.text_input("Output Cable Size / Type (Charging Cable)", value=st.session_state.output_cable_size)
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: CSS2-5M-250A cable size 2 × 70 mm²+25mm²</p>", unsafe_allow_html=True)
 
-            # GPS Coordinate Latitude & Longitude with Map Picker Dialog
+            # GPS Coordinate Latitude & Longitude with Interactive Map Picker Dialog
             st.markdown("GPS Coordinate Latitude Longitude")
             col_gps_in, col_gps_btn = st.columns([4, 1])
             with col_gps_in:
@@ -463,18 +463,50 @@ if nav_selection == "1. Main Page":
                 st.session_state.gps_lat = gps_lat
             with col_gps_btn:
                 st.markdown("<br>", unsafe_allow_html=True)
-                @st.dialog("🗺️ Select Location on Google Map")
+                @st.dialog("🗺️ Select Location on Map")
                 def gps_map_dialog():
-                    st.markdown("Click the link below to find coordinates on Google Maps, then enter them here:", unsafe_allow_html=True)
-                    st.markdown("[🔗 Open Google Maps in New Tab](https://www.google.com/maps)", unsafe_allow_html=True)
-                    dlg_lat = st.text_input("Latitude", value=st.session_state.get("gps_lat", "2.800693"))
-                    dlg_lon = st.text_input("Longitude", value=st.session_state.get("gps_lon", "101.686073"))
-                    if st.button("✅ Save Coordinates", use_container_width=True):
-                        st.session_state.gps_lat = dlg_lat
-                        st.session_state.gps_lon = dlg_lon
-                        st.success("Coordinates saved!")
-                        time.sleep(0.5)
+                    st.markdown("Click on the map to pin a location and automatically save coordinates:", unsafe_allow_html=True)
+                    try:
+                        import folium
+                        from streamlit_folium import st_folium
+                        
+                        try:
+                            init_lat = float(st.session_state.get("gps_lat", "2.800693") or 2.800693)
+                        except:
+                            init_lat = 2.800693
+                        try:
+                            init_lon = float(st.session_state.get("gps_lon", "101.686073") or 101.686073)
+                        except:
+                            init_lon = 101.686073
+
+                        m = folium.Map(location=[init_lat, init_lon], zoom_start=13)
+                        folium.Marker([init_lat, init_lon], popup="Selected Location", tooltip="Pinned Location").add_to(m)
+                        m.add_child(folium.LatLngPopup())
+                        
+                        map_data = st_folium(m, width=500, height=350, key="map_popup_interactive")
+                        
+                        if map_data and map_data.get("last_clicked"):
+                            clicked_lat = map_data["last_clicked"]["lat"]
+                            clicked_lon = map_data["last_clicked"]["lng"]
+                            st.session_state.gps_lat = str(clicked_lat)
+                            st.session_state.gps_lon = str(clicked_lon)
+                            st.success(f"Saved Latitude: {clicked_lat}, Longitude: {clicked_lon}")
+                            time.sleep(0.5)
+                            st.rerun()
+                    except Exception as e:
+                        st.warning(f"Interactive map requires folium and streamlit-folium. Error: {e}")
+                        dlg_lat = st.text_input("Latitude", value=st.session_state.get("gps_lat", "2.800693"))
+                        dlg_lon = st.text_input("Longitude", value=st.session_state.get("gps_lon", "101.686073"))
+                        if st.button("✅ Save Coordinates", use_container_width=True):
+                            st.session_state.gps_lat = dlg_lat
+                            st.session_state.gps_lon = dlg_lon
+                            st.success("Coordinates saved!")
+                            time.sleep(0.5)
+                            st.rerun()
+
+                    if st.button("✅ Close / Done", use_container_width=True):
                         st.rerun()
+
                 if st.button("🗺️ Map", key="btn_open_map"):
                     gps_map_dialog()
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693</p>", unsafe_allow_html=True)
