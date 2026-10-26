@@ -12,9 +12,15 @@ from PIL import Image
 
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseUpload, MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseUpload
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+
+# ReportLab imports for PDF generation
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image as RLImage, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 # Malaysia timezone setup
 try:
@@ -285,7 +291,6 @@ def append_row_to_gsheet(sheet_id, values, header):
     ).execute()
 
 def update_row_in_gsheet(sheet_id, row_index, values):
-    """Updates a specific row (1-based index) in Google Sheets."""
     sheet = sheets_service.spreadsheets()
     sheet.values().update(
         spreadsheetId=sheet_id,
@@ -295,7 +300,6 @@ def update_row_in_gsheet(sheet_id, row_index, values):
     ).execute()
 
 def delete_row_from_gsheet(sheet_id, row_index):
-    """Deletes a specific row from Google Sheets by clearing its values or shifting."""
     sheet = sheets_service.spreadsheets()
     sheet.values().clear(
         spreadsheetId=sheet_id,
@@ -306,6 +310,142 @@ def get_all_gsheet_rows(sheet_id):
     sheet = sheets_service.spreadsheets()
     result = sheet.values().get(spreadsheetId=sheet_id, range="A:AD").execute()
     return result.get("values", [])
+
+# --------- PDF Generation Helper ---------
+def generate_project_summary_pdf(evcs_models):
+    """Generates a PDF bytes buffer containing the Charger Specification Table matching the provided layout."""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),
+        rightMargin=20,
+        leftMargin=20,
+        topMargin=20,
+        bottomMargin=20
+    )
+    styles = getSampleStyleSheet()
+
+    header_style = ParagraphStyle(
+        'HeaderStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        alignment=1,
+        textColor=colors.black
+    )
+    cell_style = ParagraphStyle(
+        'CellStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        alignment=1,
+        textColor=colors.black
+    )
+    cell_bold_style = ParagraphStyle(
+        'CellBoldStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=9,
+        alignment=0,
+        textColor=colors.black
+    )
+
+    num_models = len(evcs_models)
+    
+    # Define row labels
+    spec_labels = [
+        "Brand / Model",
+        "No. of Units",
+        "Rated Input Power (kW AC)",
+        "Max. Charging / Output Power\n(AC or DC)",
+        "Mode of Charging",
+        "Connector Type",
+        "Output Cable Size / Type\n(Charging Cable)",
+        "No. of Charging Bays",
+        "GPS Coordinate Latitude",
+        "GPS Coordinate Longitude"
+    ]
+
+    # Header Row
+    top_header = [Paragraph("<b>PROJECT SUMMARY TABLE (CHARGER SPECIFICATION TABLE)</b>", ParagraphStyle('TitleStyle', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, alignment=1))] + [""] * (num_models + 1)
+    
+    col_headers = [Paragraph("Specification", cell_bold_style)]
+    for m in evcs_models:
+        brand_name = m.get("brand_model", "").strip() or "EVCS Model"
+        col_headers.append(Paragraph(f"<b>{brand_name}</b>", header_style))
+    col_headers.append(Paragraph("PICTURE", header_style))
+
+    table_data = [top_header, col_headers]
+
+    # Populate rows
+    for spec_label in spec_labels:
+        row = [Paragraph(spec_label.replace('\n', '<br/>'), cell_bold_style)]
+        for m in evcs_models:
+            if spec_label == "Brand / Model":
+                val = m.get("brand_model", "")
+            elif spec_label == "No. of Units":
+                val = m.get("no_of_units", "")
+            elif spec_label == "Rated Input Power (kW AC)":
+                val = m.get("rated_input_power", "")
+            elif "Max. Charging" in spec_label:
+                val = m.get("max_charging_power", "")
+            elif spec_label == "Mode of Charging":
+                val = m.get("mode_of_charging", "")
+            elif spec_label == "Connector Type":
+                val = m.get("connector_type", "")
+            elif "Output Cable" in spec_label:
+                val = m.get("output_cable_size", "")
+            elif spec_label == "No. of Charging Bays":
+                val = m.get("no_of_charging_bays", "")
+            elif spec_label == "GPS Coordinate Latitude":
+                raw_gps = m.get("gps_lat", "")
+                val = raw_gps.split(",")[0].strip() if "," in raw_gps else raw_gps
+            elif spec_label == "GPS Coordinate Longitude":
+                raw_gps = m.get("gps_lat", "")
+                val = raw_gps.split(",")[1].strip() if "," in raw_gps else m.get("gps_lon", "")
+            else:
+                val = ""
+            row.append(Paragraph(str(val).replace('\n', '<br/>'), cell_style))
+        row.append("")  # Empty for merged picture column
+        table_data.append(row)
+
+    # Attach picture if available
+    picture_element = ""
+    for m in evcs_models:
+        brand = m.get("brand_model", "")
+        if "120" in brand and os.path.exists("DC_120.png"):
+            picture_element = RLImage("DC_120.png", width=180, height=330)
+            break
+        elif "240" in brand and os.path.exists("DC_240.png"):
+            picture_element = RLImage("DC_240.png", width=180, height=330)
+            break
+    if not picture_element and os.path.exists("DC_120.png"):
+        picture_element = RLImage("DC_120.png", width=180, height=330)
+
+    if picture_element:
+        table_data[2][-1] = picture_element
+
+    # Column Widths
+    spec_col_w = 180
+    pic_col_w = 200
+    avail_w = 752 - spec_col_w - pic_col_w
+    model_col_w = avail_w / num_models if num_models > 0 else avail_w
+    col_widths = [spec_col_w] + [model_col_w] * num_models + [pic_col_w]
+
+    t_style = [
+        ('SPAN', (0, 0), (num_models + 1, 0)),
+        ('BACKGROUND', (0, 0), (num_models + 1, 0), colors.white),
+        ('BACKGROUND', (0, 1), (num_models + 1, 1), colors.HexColor('#E0E0E0')),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('SPAN', (num_models + 1, 2), (num_models + 1, len(table_data) - 1)),
+    ]
+
+    t = Table(table_data, colWidths=col_widths)
+    t.setStyle(TableStyle(t_style))
+    doc.build([t])
+    return buffer.getvalue()
 
 # --------- Initialize Session State ---------
 defaults = {
@@ -367,7 +507,7 @@ if nav_selection == "1. Main Page":
 
     st.markdown("---")
 
-    # ----- NEW APPLICATION FORM (OR EDIT MODE) -----
+    # ----- NEW APPLICATION FORM -----
     if st.session_state.app_mode == "new":
         edit_mode_title = f"📝 Edit Application (Row {st.session_state.edit_row_idx})" if st.session_state.edit_row_idx else "📝 New Application Submission"
         st.subheader(edit_mode_title)
@@ -507,6 +647,8 @@ if nav_selection == "1. Main Page":
                     })
                     st.rerun()
 
+        ##st.markdown("---")
+
         # Function to delete a model type safely
         def remove_evcs_model(model_idx):
             if len(st.session_state.evcs_models) > 1:
@@ -515,6 +657,7 @@ if nav_selection == "1. Main Page":
 
         # Render all EVCS model forms
         for idx, model in enumerate(st.session_state.evcs_models):
+            # Display exact selected brand/model name or fallback title
             exact_model_name = model['brand_model'].strip() if model['brand_model'] and model['brand_model'].strip() else f"Model Type {idx + 1} (New)"
             
             if model["is_minimized"]:
@@ -800,6 +943,8 @@ if nav_selection == "1. Main Page":
                     if st.button("🗺️ Map", key=f"btn_open_map_{idx}"):
                         gps_map_dialog(idx)
                 st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693, 101.686073</p>", unsafe_allow_html=True)
+
+            #st.markdown("---")
 
         st.markdown("---")
         st.subheader("📋 Application Sections (Bahagian A - G)")
@@ -1327,6 +1472,11 @@ if nav_selection == "1. Main Page":
                         # Process EVCS models JSON
                         evcs_models_json = json.dumps(st.session_state.evcs_models)
 
+                        # Generate Project Summary Table PDF & Upload to Drive
+                        pdf_bytes = generate_project_summary_pdf(st.session_state.evcs_models)
+                        pdf_filename = f"{project_name}_PROJECT SUMMARY (AS PER TABLE).pdf"
+                        pdf_link, _ = gdrive_upload_file(pdf_bytes, pdf_filename, "application/pdf", project_folder_id)
+
                         # Process Bahagian E Data
                         kat_penggunaan_list = []
                         if e_kat_pengilangan: kat_penggunaan_list.append("Pengilangan / Industri")
@@ -1379,8 +1529,6 @@ if nav_selection == "1. Main Page":
 
                         # For backward compatibility with single columns in sheet, take primary model info
                         primary_model = st.session_state.evcs_models[0] if st.session_state.evcs_models else {}
-                        gps_lat_val = primary_model.get("gps_lat", "")
-                        gps_lon_val = primary_model.get("gps_lon", "")
 
                         row = [
                             timestamp, project_name, negeri, pbt, poskod, daerah, mukim, kawasan,
@@ -1389,8 +1537,9 @@ if nav_selection == "1. Main Page":
                             primary_model.get("rated_input_power", ""), primary_model.get("max_charging_power", ""),
                             primary_model.get("mode_of_charging", ""), primary_model.get("connector_type", ""), 
                             primary_model.get("output_cable_size", ""), primary_model.get("no_of_charging_bays", ""),
-                            gps_lat_val, gps_lon_val,
+                            primary_model.get("gps_lat", ""), primary_model.get("gps_lon", ""),
                             evcs_models_json,
+                            pdf_link,
                             c_checklist_json, c_competent_json,
                             bahagian_e_json,
                             bahagian_f_json, bahagian_g_json
@@ -1403,6 +1552,7 @@ if nav_selection == "1. Main Page":
                             "Mode of Charging", "Connector Type", "Output Cable Size", "No. of Charging Bays",
                             "GPS Latitude", "GPS Longitude",
                             "EVCS All Models (JSON)",
+                            "Project Summary PDF Link",
                             "Bahagian C Senarai Semak (JSON)", "Bahagian C Orang Kompeten (JSON)",
                             "Bahagian E Maklumat Permohonan (JSON)",
                             "Bahagian F Pengakuan (JSON)", "Bahagian G Pengesahan (JSON)"
@@ -1469,7 +1619,7 @@ if nav_selection == "1. Main Page":
                 data_rows = rows[1:]
                 
                 for idx, r in enumerate(data_rows):
-                    row_num = idx + 2  # Spreadsheet 1-based index (header is row 1)
+                    row_num = idx + 2
                     proj_name = r[1] if len(r) > 1 and r[1] else f"Project (Row {row_num})"
                     timestamp = r[0] if len(r) > 0 and r[0] else "N/A"
                     negeri_val = r[2] if len(r) > 2 and r[2] else "-"
@@ -1482,7 +1632,6 @@ if nav_selection == "1. Main Page":
                         
                         with col_act1:
                             if st.button("✏️ Edit", key=f"btn_edit_{row_num}"):
-                                # Load values into session state for editing
                                 st.session_state.edit_row_idx = row_num
                                 st.session_state.project_name = r[1] if len(r) > 1 else ""
                                 st.session_state.negeri = r[2] if len(r) > 2 else ""
@@ -1497,10 +1646,9 @@ if nav_selection == "1. Main Page":
                                 st.session_state.hak_milik = r[11] if len(r) > 11 else ""
                                 st.session_state.kedudukan_premis = r[12] if len(r) > 12 else ""
                                 
-                                # EVCS models JSON parse if available
-                                if len(r) > 24 and r[24]:
+                                if len(r) > 23 and r[23]:
                                     try:
-                                        parsed_models = json.loads(r[24])
+                                        parsed_models = json.loads(r[23])
                                         if isinstance(parsed_models, list) and parsed_models:
                                             st.session_state.evcs_models = parsed_models
                                     except:
@@ -1511,7 +1659,6 @@ if nav_selection == "1. Main Page":
 
                         with col_act2:
                             if st.button("➕ Save New", key=f"btn_savenew_{row_num}"):
-                                # Populate as new and trigger submission
                                 st.session_state.edit_row_idx = None
                                 st.session_state.project_name = r[1] if len(r) > 1 else ""
                                 st.session_state.negeri = r[2] if len(r) > 2 else ""
