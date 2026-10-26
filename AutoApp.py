@@ -522,7 +522,7 @@ if nav_selection == "1. Main Page":
             else:
                 col_title, col_del = st.columns([4, 1])
                 with col_title:
-                    #st.markdown(f"#### ⚙️ Active Model: {exact_model_name}")
+                    st.markdown(f"#### ⚙️ Active Model: {exact_model_name}")
                 with col_del:
                     if len(st.session_state.evcs_models) > 1:
                         if st.button("🗑️ Remove Model", key=f"remove_active_model_{idx}"):
@@ -779,7 +779,7 @@ if nav_selection == "1. Main Page":
                         gps_map_dialog(idx)
                 st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693, 101.686073</p>", unsafe_allow_html=True)
 
-            st.markdown("---")
+            #st.markdown("---")
 
         st.markdown("---")
         st.subheader("📋 Application Sections (Bahagian A - G)")
