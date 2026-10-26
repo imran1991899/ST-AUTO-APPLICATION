@@ -31,9 +31,9 @@ except ImportError:
     MALAYSIA_ZONE = pytz.timezone("Asia/Kuala_Lumpur")
 
 # --------- Page Setup ---------
-st.set_page_config(page_title="Application Portal ST", layout="wide")
+st.set_page_config(page_title="Application Portal", layout="wide")
 
-# --------- Custom CSS for Border Cards around Images & Stepper Buttons ---------
+# --------- Custom CSS for Border Cards, Stepper Buttons & Glowing Navigation Menu ---------
 st.markdown("""
 <style>
 .evc-card {
@@ -56,6 +56,24 @@ div.stButton > button:active, div.stButton > button:focus {
     border-color: #00FF00 !important;
     box-shadow: 0 0 15px #00FF00 !important;
     color: #00FF00 !important;
+}
+
+/* Custom styling for sidebar radio buttons to create hover glow and active click glow */
+[data-testid="stSidebar"] div.stRadio > label {
+    background-color: transparent;
+    border-radius: 8px;
+    padding: 4px 8px;
+    transition: all 0.3s ease;
+}
+
+[data-testid="stSidebar"] div.stRadio label:hover {
+    border-color: #00FF00 !important;
+    box-shadow: 0 0 10px #00FF00 !important;
+}
+
+[data-testid="stSidebar"] div.stRadio input:checked + div {
+    border-color: #00FF00 !important;
+    box-shadow: 0 0 15px #00FF00 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -486,15 +504,18 @@ for key, default in defaults.items():
         st.session_state[key] = default
 
 # --------- Navigation / Sidebar Setup ---------
-st.sidebar.title("Navigation Menu")
+st.sidebar.markdown("### Navigation Menu")
+st.sidebar.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10px;'>Go to</p>", unsafe_allow_html=True)
+
 nav_selection = st.sidebar.radio(
     "Go to",
-    ["1. ST Application", "2. Business License PBT", "3. Information"]
+    ["ST Application", "Business License PBT", "Information"],
+    label_visibility="collapsed"
 )
 
-# --------- 1. ST Application ---------
-if nav_selection == "1. ST Application":
-    st.title("Application Portal ST")
+# --------- 1. MAIN PAGE (ST Application) ---------
+if nav_selection == "ST Application":
+    st.title("Application Portal")
     
     col1, col2 = st.columns(2)
     with col1:
@@ -647,8 +668,6 @@ if nav_selection == "1. ST Application":
                     })
                     st.rerun()
 
-        ##st.markdown("---")
-
         # Function to delete a model type safely
         def remove_evcs_model(model_idx):
             if len(st.session_state.evcs_models) > 1:
@@ -657,7 +676,6 @@ if nav_selection == "1. ST Application":
 
         # Render all EVCS model forms
         for idx, model in enumerate(st.session_state.evcs_models):
-            # Display exact selected brand/model name or fallback title
             exact_model_name = model['brand_model'].strip() if model['brand_model'] and model['brand_model'].strip() else f"Model Type {idx + 1} (New)"
             
             if model["is_minimized"]:
@@ -943,8 +961,6 @@ if nav_selection == "1. ST Application":
                     if st.button("🗺️ Map", key=f"btn_open_map_{idx}"):
                         gps_map_dialog(idx)
                 st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693, 101.686073</p>", unsafe_allow_html=True)
-
-            #st.markdown("---")
 
         st.markdown("---")
         st.subheader("📋 Application Sections (Bahagian A - G)")
@@ -1682,12 +1698,12 @@ if nav_selection == "1. ST Application":
         except Exception as e:
             st.error(f"Could not load existing applications: {e}")
 
-# --------- 2. DETAIL APPLICATION ---------
-elif nav_selection == "2. Business License PBT":
+# --------- 2. BUSINESS LICENSE PBT ---------
+elif nav_selection == "Business License PBT":
     st.title("Business License PBT")
-    st.info("This section is reserved for future detailed application management and review tools.")
+    st.info("This section is reserved for Business License PBT management and review tools.")
 
 # --------- 3. INFORMATION ---------
-elif nav_selection == "3. Information":
+elif nav_selection == "Information":
     st.title("Information")
     st.info("This section provides guidelines, instructions, and system information.")
