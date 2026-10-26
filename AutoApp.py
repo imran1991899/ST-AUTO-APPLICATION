@@ -467,20 +467,28 @@ if nav_selection == "1. Main Page":
                 with b_m1:
                     if st.button("-", key="minus_rip"):
                         import re
-                        nums = re.findall(r'\d+', st.session_state.rated_input_power)
+                        curr = st.session_state.get("input_rated_input_power", st.session_state.rated_input_power)
+                        nums = re.findall(r'\d+', curr)
                         if nums:
                             val = max(0, int(nums[0]) - 1)
-                            st.session_state.rated_input_power = st.session_state.rated_input_power.replace(nums[0], str(val), 1)
-                            st.rerun()
+                            new_val = curr.replace(nums[0], str(val), 1)
+                        else:
+                            new_val = "0"
+                        st.session_state.rated_input_power = new_val
+                        st.session_state.input_rated_input_power = new_val
+                        st.rerun()
                 with b_p1:
                     if st.button("+", key="plus_rip"):
                         import re
-                        nums = re.findall(r'\d+', st.session_state.rated_input_power)
+                        curr = st.session_state.get("input_rated_input_power", st.session_state.rated_input_power)
+                        nums = re.findall(r'\d+', curr)
                         if nums:
                             val = int(nums[0]) + 1
-                            st.session_state.rated_input_power = st.session_state.rated_input_power.replace(nums[0], str(val), 1)
+                            new_val = curr.replace(nums[0], str(val), 1)
                         else:
-                            st.session_state.rated_input_power = "1"
+                            new_val = "1"
+                        st.session_state.rated_input_power = new_val
+                        st.session_state.input_rated_input_power = new_val
                         st.rerun()
 
             mode_of_charging = st.text_input("Mode of Charging", value=st.session_state.mode_of_charging)
@@ -489,11 +497,11 @@ if nav_selection == "1. Main Page":
             output_cable_size = st.text_input("Output Cable Size / Type (Charging Cable)", value=st.session_state.output_cable_size)
             st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: CSS2-5M-250A cable size 2 × 70 mm²+25mm²</p>", unsafe_allow_html=True)
 
-            # GPS Coordinate Latitude & Longitude with Interactive Map Picker Dialog & Location Search Suggestions
+            # GPS Coordinate Latitude Longitude & Map Dialog
             st.markdown("GPS Coordinate Latitude Longitude")
             col_gps_in, col_gps_btn = st.columns([4, 1])
             with col_gps_in:
-                gps_lat = st.text_input("Latitude", value=st.session_state.gps_lat, key="input_gps_lat", placeholder="2.800693")
+                gps_lat = st.text_input("Latitude Longitude", value=st.session_state.gps_lat, key="input_gps_lat", placeholder="2.800693")
                 st.session_state.gps_lat = gps_lat
             with col_gps_btn:
                 st.markdown("<br>", unsafe_allow_html=True)
@@ -501,7 +509,6 @@ if nav_selection == "1. Main Page":
                 def gps_map_dialog():
                     st.markdown("Search a location or click on the map to pin coordinates:", unsafe_allow_html=True)
                     
-                    # Location search and suggestion logic using Nominatim API
                     import urllib.request
                     import urllib.parse
                     import json
@@ -550,6 +557,7 @@ if nav_selection == "1. Main Page":
                             clicked_lon = map_data["last_clicked"]["lng"]
                             st.session_state.gps_lat = str(clicked_lat)
                             st.session_state.gps_lon = str(clicked_lon)
+                            st.session_state.input_gps_lat = str(clicked_lat)
                             st.success(f"Saved Latitude: {clicked_lat}, Longitude: {clicked_lon}")
                             time.sleep(0.5)
                             st.rerun()
@@ -560,6 +568,7 @@ if nav_selection == "1. Main Page":
                         if st.button("✅ Save Coordinates", use_container_width=True):
                             st.session_state.gps_lat = dlg_lat
                             st.session_state.gps_lon = dlg_lon
+                            st.session_state.input_gps_lat = dlg_lat
                             st.success("Coordinates saved!")
                             time.sleep(0.5)
                             st.rerun()
@@ -584,20 +593,28 @@ if nav_selection == "1. Main Page":
                 with b_m2:
                     if st.button("-", key="minus_nou"):
                         import re
-                        nums = re.findall(r'\d+', st.session_state.no_of_units)
+                        curr = st.session_state.get("input_no_of_units", st.session_state.no_of_units)
+                        nums = re.findall(r'\d+', curr)
                         if nums:
                             val = max(0, int(nums[0]) - 1)
-                            st.session_state.no_of_units = st.session_state.no_of_units.replace(nums[0], str(val), 1)
-                            st.rerun()
+                            new_val = curr.replace(nums[0], str(val), 1)
+                        else:
+                            new_val = "0"
+                        st.session_state.no_of_units = new_val
+                        st.session_state.input_no_of_units = new_val
+                        st.rerun()
                 with b_p2:
                     if st.button("+", key="plus_nou"):
                         import re
-                        nums = re.findall(r'\d+', st.session_state.no_of_units)
+                        curr = st.session_state.get("input_no_of_units", st.session_state.no_of_units)
+                        nums = re.findall(r'\d+', curr)
                         if nums:
                             val = int(nums[0]) + 1
-                            st.session_state.no_of_units = st.session_state.no_of_units.replace(nums[0], str(val), 1)
+                            new_val = curr.replace(nums[0], str(val), 1)
                         else:
-                            st.session_state.no_of_units = "1"
+                            new_val = "1"
+                        st.session_state.no_of_units = new_val
+                        st.session_state.input_no_of_units = new_val
                         st.rerun()
 
             # Max. Charging / Output Power with stepper buttons [-] [+]
@@ -612,20 +629,28 @@ if nav_selection == "1. Main Page":
                 with b_m3:
                     if st.button("-", key="minus_mcp"):
                         import re
-                        nums = re.findall(r'\d+', st.session_state.max_charging_power)
+                        curr = st.session_state.get("input_max_charging_power", st.session_state.max_charging_power)
+                        nums = re.findall(r'\d+', curr)
                         if nums:
                             val = max(0, int(nums[0]) - 1)
-                            st.session_state.max_charging_power = st.session_state.max_charging_power.replace(nums[0], str(val), 1)
-                            st.rerun()
+                            new_val = curr.replace(nums[0], str(val), 1)
+                        else:
+                            new_val = "0"
+                        st.session_state.max_charging_power = new_val
+                        st.session_state.input_max_charging_power = new_val
+                        st.rerun()
                 with b_p3:
                     if st.button("+", key="plus_mcp"):
                         import re
-                        nums = re.findall(r'\d+', st.session_state.max_charging_power)
+                        curr = st.session_state.get("input_max_charging_power", st.session_state.max_charging_power)
+                        nums = re.findall(r'\d+', curr)
                         if nums:
                             val = int(nums[0]) + 1
-                            st.session_state.max_charging_power = st.session_state.max_charging_power.replace(nums[0], str(val), 1)
+                            new_val = curr.replace(nums[0], str(val), 1)
                         else:
-                            st.session_state.max_charging_power = "1"
+                            new_val = "1"
+                        st.session_state.max_charging_power = new_val
+                        st.session_state.input_max_charging_power = new_val
                         st.rerun()
 
             connector_type = st.text_input("Connector Type", value=st.session_state.connector_type)
@@ -643,24 +668,29 @@ if nav_selection == "1. Main Page":
                 with b_m4:
                     if st.button("-", key="minus_nocb"):
                         import re
-                        nums = re.findall(r'\d+', st.session_state.no_of_charging_bays)
+                        curr = st.session_state.get("input_no_of_charging_bays", st.session_state.no_of_charging_bays)
+                        nums = re.findall(r'\d+', curr)
                         if nums:
                             val = max(0, int(nums[0]) - 1)
-                            st.session_state.no_of_charging_bays = st.session_state.no_of_charging_bays.replace(nums[0], str(val), 1)
-                            st.rerun()
+                            new_val = curr.replace(nums[0], str(val), 1)
+                        else:
+                            new_val = "0"
+                        st.session_state.no_of_charging_bays = new_val
+                        st.session_state.input_no_of_charging_bays = new_val
+                        st.rerun()
                 with b_p4:
                     if st.button("+", key="plus_nocb"):
                         import re
-                        nums = re.findall(r'\d+', st.session_state.no_of_charging_bays)
+                        curr = st.session_state.get("input_no_of_charging_bays", st.session_state.no_of_charging_bays)
+                        nums = re.findall(r'\d+', curr)
                         if nums:
                             val = int(nums[0]) + 1
-                            st.session_state.no_of_charging_bays = st.session_state.no_of_charging_bays.replace(nums[0], str(val), 1)
+                            new_val = curr.replace(nums[0], str(val), 1)
                         else:
-                            st.session_state.no_of_charging_bays = "1"
+                            new_val = "1"
+                        st.session_state.no_of_charging_bays = new_val
+                        st.session_state.input_no_of_charging_bays = new_val
                         st.rerun()
-
-            gps_lon = st.text_input("GPS Coordinate Longitude", value=st.session_state.gps_lon)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 101.686073</p>", unsafe_allow_html=True)
 
         st.markdown("---")
 
