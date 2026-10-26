@@ -323,7 +323,6 @@ defaults = {
     "no_lot": "",
     "hak_milik": "",
     "kedudukan_premis": "",
-    "description": "",
     "tarikh_mulatugas_count": 1,
     "evcs_models": [
         {
@@ -1390,7 +1389,7 @@ if nav_selection == "1. Main Page":
                             primary_model.get("rated_input_power", ""), primary_model.get("max_charging_power", ""),
                             primary_model.get("mode_of_charging", ""), primary_model.get("connector_type", ""), 
                             primary_model.get("output_cable_size", ""), primary_model.get("no_of_charging_bays", ""),
-                            gps_lat_val, gps_lon_val, description,
+                            gps_lat_val, gps_lon_val,
                             evcs_models_json,
                             c_checklist_json, c_competent_json,
                             bahagian_e_json,
@@ -1402,7 +1401,7 @@ if nav_selection == "1. Main Page":
                             "Taman / Tempat", "Jalan", "No. Lot / No. Unit / Blok / PT", "Hak Milik Bangunan", "Kedudukan Premis",
                             "Brand / Model", "No. of Units", "Rated Input Power (kW AC)", "Max. Charging Power",
                             "Mode of Charging", "Connector Type", "Output Cable Size", "No. of Charging Bays",
-                            "GPS Latitude", "GPS Longitude", "Description",
+                            "GPS Latitude", "GPS Longitude",
                             "EVCS All Models (JSON)",
                             "Bahagian C Senarai Semak (JSON)", "Bahagian C Orang Kompeten (JSON)",
                             "Bahagian E Maklumat Permohonan (JSON)",
@@ -1433,7 +1432,6 @@ if nav_selection == "1. Main Page":
                             "no_lot": "",
                             "hak_milik": "",
                             "kedudukan_premis": "",
-                            "description": "",
                             "tarikh_mulatugas_count": 1,
                             "evcs_models": [
                                 {
