@@ -656,7 +656,7 @@ if nav_selection == "1. Main Page":
                         st.rerun()
 
             connector_type = st.text_input("Connector Type", value=st.session_state.connector_type)
-            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: 15px;'>Example: 8 × CCS 2</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 8 × CCS 2</p>", unsafe_allow_html=True)
 
             # No. of Charging Bays with stepper buttons [-] [+]
             col_nocb_in, col_nocb_btn = st.columns([4, 1])
