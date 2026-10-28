@@ -877,6 +877,7 @@ if nav_selection == "ST Application":
                             else:
                                 new_val = "0"
                             st.session_state.evcs_models[idx]["no_of_units"] = new_val
+                            st.session_state[f"input_no_of_units_{idx}"] = new_val
                             st.rerun()
                     with col_nou_btn2:
                         if st.button("+", key=f"plus_nou_{idx}", use_container_width=True):
