@@ -47,7 +47,7 @@ st.markdown("""
 
     /* Make the main block container wider to fill the screen as requested */
     .block-container {
-        max-width: 80% !important;
+        max-width: 98% !important;
         padding-left: 2rem !important;
         padding-right: 2rem !important;
     }
@@ -817,41 +817,39 @@ if nav_selection == "ST Application":
                     st.session_state.evcs_models[idx]["brand_model"] = brand_model
                     st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: Guorui / GRD08-120SDE</p>", unsafe_allow_html=True)
 
-                    # Rated Input Power with stepper buttons [-] [+]
-                    col_rip_in, col_rip_btn = st.columns([4, 1])
+                    # Rated Input Power with inline group [-] [+]
+                    st.markdown("Rated Input Power (kW AC)")
+                    col_rip_in, col_rip_btn1, col_rip_btn2 = st.columns([6, 1, 1])
                     with col_rip_in:
-                        rated_input_power = st.text_input("Rated Input Power (kW AC)", value=model["rated_input_power"], key=f"input_rated_input_power_{idx}")
-                        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 133 kW AC</p>", unsafe_allow_html=True)
+                        rated_input_power = st.text_input("Rated Input Power (kW AC)", value=model["rated_input_power"], key=f"input_rated_input_power_{idx}", label_visibility="collapsed")
                         st.session_state.evcs_models[idx]["rated_input_power"] = rated_input_power
-                    with col_rip_btn:
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        b_m1, b_p1 = st.columns(2)
-                        with b_m1:
-                            if st.button("-", key=f"minus_rip_{idx}"):
-                                import re
-                                curr = st.session_state.evcs_models[idx]["rated_input_power"]
-                                nums = re.findall(r'\d+', curr)
-                                if nums:
-                                    val = max(0, int(nums[0]) - 1)
-                                    new_val = curr.replace(nums[0], str(val), 1)
-                                else:
-                                    new_val = "0"
-                                st.session_state.evcs_models[idx]["rated_input_power"] = new_val
-                                st.session_state[f"input_rated_input_power_{idx}"] = new_val
-                                st.rerun()
-                        with b_p1:
-                            if st.button("+", key=f"plus_rip_{idx}"):
-                                import re
-                                curr = st.session_state.evcs_models[idx]["rated_input_power"]
-                                nums = re.findall(r'\d+', curr)
-                                if nums:
-                                    val = int(nums[0]) + 1
-                                    new_val = curr.replace(nums[0], str(val), 1)
-                                else:
-                                    new_val = "1"
-                                st.session_state.evcs_models[idx]["rated_input_power"] = new_val
-                                st.session_state[f"input_rated_input_power_{idx}"] = new_val
-                                st.rerun()
+                    with col_rip_btn1:
+                        if st.button("-", key=f"minus_rip_{idx}", use_container_width=True):
+                            import re
+                            curr = st.session_state.evcs_models[idx]["rated_input_power"]
+                            nums = re.findall(r'\d+', curr)
+                            if nums:
+                                val = max(0, int(nums[0]) - 1)
+                                new_val = curr.replace(nums[0], str(val), 1)
+                            else:
+                                new_val = "0"
+                            st.session_state.evcs_models[idx]["rated_input_power"] = new_val
+                            st.session_state[f"input_rated_input_power_{idx}"] = new_val
+                            st.rerun()
+                    with col_rip_btn2:
+                        if st.button("+", key=f"plus_rip_{idx}", use_container_width=True):
+                            import re
+                            curr = st.session_state.evcs_models[idx]["rated_input_power"]
+                            nums = re.findall(r'\d+', curr)
+                            if nums:
+                                val = int(nums[0]) + 1
+                                new_val = curr.replace(nums[0], str(val), 1)
+                            else:
+                                new_val = "1"
+                            st.session_state.evcs_models[idx]["rated_input_power"] = new_val
+                            st.session_state[f"input_rated_input_power_{idx}"] = new_val
+                            st.rerun()
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10px;'>Example: 133 kW AC</p>", unsafe_allow_html=True)
 
                     mode_of_charging = st.text_input("Mode of Charging", value=model["mode_of_charging"], key=f"mode_of_charging_{idx}")
                     st.session_state.evcs_models[idx]["mode_of_charging"] = mode_of_charging
@@ -862,117 +860,111 @@ if nav_selection == "ST Application":
                     st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: CSS2-5M-250A cable size 2 × 70 mm²+25mm²</p>", unsafe_allow_html=True)
 
                 with col_s2:
-                    # No. of Units with stepper buttons [-] [+]
-                    col_nou_in, col_nou_btn = st.columns([4, 1])
+                    # No. of Units with inline group [-] [+]
+                    st.markdown("No. of Units")
+                    col_nou_in, col_nou_btn1, col_nou_btn2 = st.columns([6, 1, 1])
                     with col_nou_in:
-                        no_of_units = st.text_input("No. of Units", value=model["no_of_units"], key=f"input_no_of_units_{idx}")
-                        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2</p>", unsafe_allow_html=True)
+                        no_of_units = st.text_input("No. of Units", value=model["no_of_units"], key=f"input_no_of_units_{idx}", label_visibility="collapsed")
                         st.session_state.evcs_models[idx]["no_of_units"] = no_of_units
-                    with col_nou_btn:
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        b_m2, b_p2 = st.columns(2)
-                        with b_m2:
-                            if st.button("-", key=f"minus_nou_{idx}"):
-                                import re
-                                curr = st.session_state.evcs_models[idx]["no_of_units"]
-                                nums = re.findall(r'\d+', curr)
-                                if nums:
-                                    val = max(0, int(nums[0]) - 1)
-                                    new_val = curr.replace(nums[0], str(val), 1)
-                                else:
-                                    new_val = "0"
-                                st.session_state.evcs_models[idx]["no_of_units"] = new_val
-                                st.session_state[f"input_no_of_units_{idx}"] = new_val
-                                st.rerun()
-                        with b_p2:
-                            if st.button("+", key=f"plus_nou_{idx}"):
-                                import re
-                                curr = st.session_state.evcs_models[idx]["no_of_units"]
-                                nums = re.findall(r'\d+', curr)
-                                if nums:
-                                    val = int(nums[0]) + 1
-                                    new_val = curr.replace(nums[0], str(val), 1)
-                                else:
-                                    new_val = "1"
-                                st.session_state.evcs_models[idx]["no_of_units"] = new_val
-                                st.session_state[f"input_no_of_units_{idx}"] = new_val
-                                st.rerun()
+                    with col_nou_btn1:
+                        if st.button("-", key=f"minus_nou_{idx}", use_container_width=True):
+                            import re
+                            curr = st.session_state.evcs_models[idx]["no_of_units"]
+                            nums = re.findall(r'\d+', curr)
+                            if nums:
+                                val = max(0, int(nums[0]) - 1)
+                                new_val = curr.replace(nums[0], str(val), 1)
+                            else:
+                                new_val = "0"
+                            st.session_state.evcs_models[idx]["no_of_units"] = new_val
+                            st.session_state[f"input_no_of_units_{idx}"] = new_val
+                            st.rerun()
+                    with col_nou_btn2:
+                        if st.button("+", key=f"plus_nou_{idx}", use_container_width=True):
+                            import re
+                            curr = st.session_state.evcs_models[idx]["no_of_units"]
+                            nums = re.findall(r'\d+', curr)
+                            if nums:
+                                val = int(nums[0]) + 1
+                                new_val = curr.replace(nums[0], str(val), 1)
+                            else:
+                                new_val = "1"
+                            st.session_state.evcs_models[idx]["no_of_units"] = new_val
+                            st.session_state[f"input_no_of_units_{idx}"] = new_val
+                            st.rerun()
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10px;'>Example: 2</p>", unsafe_allow_html=True)
 
-                    # Max. Charging / Output Power with stepper buttons [-] [+]
-                    col_mcp_in, col_mcp_btn = st.columns([4, 1])
+                    # Max. Charging / Output Power with inline group [-] [+]
+                    st.markdown("Max. Charging / Output Power (AC or DC)")
+                    col_mcp_in, col_mcp_btn1, col_mcp_btn2 = st.columns([6, 1, 1])
                     with col_mcp_in:
-                        max_charging_power = st.text_input("Max. Charging / Output Power (AC or DC)", value=model["max_charging_power"], key=f"input_max_charging_power_{idx}")
-                        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 120 kW / DC</p>", unsafe_allow_html=True)
+                        max_charging_power = st.text_input("Max. Charging / Output Power (AC or DC)", value=model["max_charging_power"], key=f"input_max_charging_power_{idx}", label_visibility="collapsed")
                         st.session_state.evcs_models[idx]["max_charging_power"] = max_charging_power
-                    with col_mcp_btn:
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        b_m3, b_p3 = st.columns(2)
-                        with b_m3:
-                            if st.button("-", key=f"minus_mcp_{idx}"):
-                                import re
-                                curr = st.session_state.evcs_models[idx]["max_charging_power"]
-                                nums = re.findall(r'\d+', curr)
-                                if nums:
-                                    val = max(0, int(nums[0]) - 1)
-                                    new_val = curr.replace(nums[0], str(val), 1)
-                                else:
-                                    new_val = "0"
-                                st.session_state.evcs_models[idx]["max_charging_power"] = new_val
-                                st.session_state[f"input_max_charging_power_{idx}"] = new_val
-                                st.rerun()
-                        with b_p3:
-                            if st.button("+", key=f"plus_mcp_{idx}"):
-                                import re
-                                curr = st.session_state.evcs_models[idx]["max_charging_power"]
-                                nums = re.findall(r'\d+', curr)
-                                if nums:
-                                    val = int(nums[0]) + 1
-                                    new_val = curr.replace(nums[0], str(val), 1)
-                                else:
-                                    new_val = "1"
-                                st.session_state.evcs_models[idx]["max_charging_power"] = new_val
-                                st.session_state[f"input_max_charging_power_{idx}"] = new_val
-                                st.rerun()
+                    with col_mcp_btn1:
+                        if st.button("-", key=f"minus_mcp_{idx}", use_container_width=True):
+                            import re
+                            curr = st.session_state.evcs_models[idx]["max_charging_power"]
+                            nums = re.findall(r'\d+', curr)
+                            if nums:
+                                val = max(0, int(nums[0]) - 1)
+                                new_val = curr.replace(nums[0], str(val), 1)
+                            else:
+                                new_val = "0"
+                            st.session_state.evcs_models[idx]["max_charging_power"] = new_val
+                            st.session_state[f"input_max_charging_power_{idx}"] = new_val
+                            st.rerun()
+                    with col_mcp_btn2:
+                        if st.button("+", key=f"plus_mcp_{idx}", use_container_width=True):
+                            import re
+                            curr = st.session_state.evcs_models[idx]["max_charging_power"]
+                            nums = re.findall(r'\d+', curr)
+                            if nums:
+                                val = int(nums[0]) + 1
+                                new_val = curr.replace(nums[0], str(val), 1)
+                            else:
+                                new_val = "1"
+                            st.session_state.evcs_models[idx]["max_charging_power"] = new_val
+                            st.session_state[f"input_max_charging_power_{idx}"] = new_val
+                            st.rerun()
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10px;'>Example: 120 kW / DC</p>", unsafe_allow_html=True)
 
                     connector_type = st.text_input("Connector Type", value=model["connector_type"], key=f"connector_type_{idx}")
                     st.session_state.evcs_models[idx]["connector_type"] = connector_type
                     st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 8 × CCS 2</p>", unsafe_allow_html=True)
 
-                    # No. of Charging Bays with stepper buttons [-] [+]
-                    col_nocb_in, col_nocb_btn = st.columns([4, 1])
+                    # No. of Charging Bays with inline group [-] [+]
+                    st.markdown("No. of Charging Bays")
+                    col_nocb_in, col_nocb_btn1, col_nocb_btn2 = st.columns([6, 1, 1])
                     with col_nocb_in:
-                        no_of_charging_bays = st.text_input("No. of Charging Bays", value=model["no_of_charging_bays"], key=f"input_no_of_charging_bays_{idx}")
-                        st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 10</p>", unsafe_allow_html=True)
+                        no_of_charging_bays = st.text_input("No. of Charging Bays", value=model["no_of_charging_bays"], key=f"input_no_of_charging_bays_{idx}", label_visibility="collapsed")
                         st.session_state.evcs_models[idx]["no_of_charging_bays"] = no_of_charging_bays
-                    with col_nocb_btn:
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        b_m4, b_p4 = st.columns(2)
-                        with b_m4:
-                            if st.button("-", key=f"minus_nocb_{idx}"):
-                                import re
-                                curr = st.session_state.evcs_models[idx]["no_of_charging_bays"]
-                                nums = re.findall(r'\d+', curr)
-                                if nums:
-                                    val = max(0, int(nums[0]) - 1)
-                                    new_val = curr.replace(nums[0], str(val), 1)
-                                else:
-                                    new_val = "0"
-                                st.session_state.evcs_models[idx]["no_of_charging_bays"] = new_val
-                                st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
-                                st.rerun()
-                        with b_p4:
-                            if st.button("+", key=f"plus_nocb_{idx}"):
-                                import re
-                                curr = st.session_state.evcs_models[idx]["no_of_charging_bays"]
-                                nums = re.findall(r'\d+', curr)
-                                if nums:
-                                    val = int(nums[0]) + 1
-                                    new_val = curr.replace(nums[0], str(val), 1)
-                                else:
-                                    new_val = "1"
-                                st.session_state.evcs_models[idx]["no_of_charging_bays"] = new_val
-                                st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
-                                st.rerun()
+                    with col_nocb_btn1:
+                        if st.button("-", key=f"minus_nocb_{idx}", use_container_width=True):
+                            import re
+                            curr = st.session_state.evcs_models[idx]["no_of_charging_bays"]
+                            nums = re.findall(r'\d+', curr)
+                            if nums:
+                                val = max(0, int(nums[0]) - 1)
+                                new_val = curr.replace(nums[0], str(val), 1)
+                            else:
+                                new_val = "0"
+                            st.session_state.evcs_models[idx]["no_of_charging_bays"] = new_val
+                            st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
+                            st.rerun()
+                    with col_nocb_btn2:
+                        if st.button("+", key=f"plus_nocb_{idx}", use_container_width=True):
+                            import re
+                            curr = st.session_state.evcs_models[idx]["no_of_charging_bays"]
+                            nums = re.findall(r'\d+', curr)
+                            if nums:
+                                val = int(nums[0]) + 1
+                                new_val = curr.replace(nums[0], str(val), 1)
+                            else:
+                                new_val = "1"
+                            st.session_state.evcs_models[idx]["no_of_charging_bays"] = new_val
+                            st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
+                            st.rerun()
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10px;'>Example: 10</p>", unsafe_allow_html=True)
 
                 # GPS Coordinate Latitude Longitude & Map Dialog (Integrated inside each model form)
                 st.markdown("GPS Coordinate Latitude Longitude")
