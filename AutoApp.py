@@ -30,53 +30,145 @@ except ImportError:
     import pytz
     MALAYSIA_ZONE = pytz.timezone("Asia/Kuala_Lumpur")
 
-# --------- Page Setup ---------
-st.set_page_config(page_title="Application Portal", layout="wide")
+# --------- Page Setup (Neon Green & Black Theme) ---------
+st.set_page_config(
+    page_title="Application Portal", 
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-# --------- Custom CSS for Border Cards, Stepper Buttons & Glowing Navigation Menu ---------
+# --------- Custom CSS for Neon Green & Black Theme matching the styling provided ---------
 st.markdown("""
-<style>
-.evc-card {
-    border: 2px solid #008080;
-    border-radius: 10px;
-    padding: 10px;
-    text-align: center;
-    background-color: #0e1117;
-    margin-bottom: 10px;
-}
-[data-testid="stVerticalBlock"] [data-testid="stContainer"] {
-    border: 2px solid #008080 !important;
-    border-radius: 10px !important;
-    background-color: #0e1117 !important;
-    padding: 10px !important;
-}
+    <style>
+    /* Main Background - Very Dark Gray/Black */
+    .stApp {
+        background-color: #0B0E0F;
+    }
+    
+    /* Header Style */
+    .custom-header {
+        background-color: #111516;
+        border-bottom: 2px solid #00FF66;
+        padding: 15px;
+        border-radius: 8px 8px 0px 0px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .header-title {
+        color: #00FF66 !important;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 22px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        margin: 0;
+    }
 
-/* Green glow effect when clicking/focusing buttons */
-div.stButton > button:active, div.stButton > button:focus {
-    border-color: #00FF00 !important;
-    box-shadow: 0 0 15px #00FF00 !important;
-    color: #00FF00 !important;
-}
+    /* Labels - Small, Gray, Uppercase */
+    label, .stMarkdown p {
+        color: #888888 !important;
+        font-family: 'Courier New', Courier, monospace !important;
+        text-transform: uppercase;
+        font-size: 12px !important;
+        font-weight: bold;
+    }
 
-/* Custom styling for sidebar radio buttons to create hover glow and active click glow */
-[data-testid="stSidebar"] div.stRadio > label {
-    background-color: transparent;
-    border-radius: 8px;
-    padding: 4px 8px;
-    transition: all 0.3s ease;
-}
+    /* Input Fields - Dark with Neon Green Text */
+    .stTextInput>div>div>input, .stSelectbox>div>div>div, .stDateInput>div>div>input, .stNumberInput>div>div>input {
+        background-color: #111516 !important;
+        color: #00FF66 !important;
+        border: 1px solid #333333 !important;
+        font-family: 'Courier New', Courier, monospace !important;
+        border-radius: 4px !important;
+    }
+    
+    /* Success/Error Messages */
+    .stAlert {
+        background-color: #111516 !important;
+        color: #00FF66 !important;
+        border: 1px solid #00FF66 !important;
+    }
 
-[data-testid="stSidebar"] div.stRadio label:hover {
-    border-color: #00FF00 !important;
-    box-shadow: 0 0 10px #00FF00 !important;
-}
+    /* Buttons - Neon Green Outline/Solid */
+    .stButton>button {
+        background-color: transparent !important;
+        color: #00FF66 !important;
+        border: 2px solid #00FF66 !important;
+        font-family: 'Courier New', Courier, monospace !important;
+        font-weight: bold !important;
+        transition: 0.3s;
+    }
+    
+    .stButton>button:hover {
+        background-color: #00FF66 !important;
+        color: #000000 !important;
+    }
 
-[data-testid="stSidebar"] div.stRadio input:checked + div {
-    border-color: #00FF00 !important;
-    box-shadow: 0 0 15px #00FF00 !important;
-}
-</style>
-""", unsafe_allow_html=True)
+    /* Target the Download button wrapper for light blue glow */
+    div.stDownloadButton > button {
+        background-color: transparent !important;
+        color: #00E5FF !important;
+        border: 2px solid #00E5FF !important;
+        box-shadow: 0 0 15px rgba(0, 229, 255, 0.6) !important;
+        animation: pulseGlow 2s infinite alternate;
+    }
+
+    div.stDownloadButton > button:hover {
+        background-color: #00E5FF !important;
+        color: #000000 !important;
+        box-shadow: 0 0 25px rgba(0, 229, 255, 0.9) !important;
+    }
+
+    @keyframes pulseGlow {
+        from { box-shadow: 0 0 8px rgba(0, 229, 255, 0.4); }
+        to { box-shadow: 0 0 20px rgba(0, 229, 255, 0.8); }
+    }
+
+    /* Divider color */
+    hr {
+        border-color: #1A1E1F !important;
+    }
+
+    /* Progress Bar */
+    .stProgress > div > div > div > div {
+        background-color: #00FF66 !important;
+    }
+    
+    /* Style custom Radio button container to match theme */
+    div[data-testid="stRadio"] > label {
+        margin-bottom: 8px !important;
+    }
+    div[data-testid="stRadio"] label p {
+        color: #00FF66 !important;
+    }
+
+    /* Extra container styling preservation */
+    .evc-card {
+        border: 2px solid #00FF66;
+        border-radius: 10px;
+        padding: 10px;
+        text-align: center;
+        background-color: #111516;
+        margin-bottom: 10px;
+    }
+    [data-testid="stVerticalBlock"] [data-testid="stContainer"] {
+        border: 2px solid #00FF66 !important;
+        border-radius: 10px !important;
+        background-color: #111516 !important;
+        padding: 10px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- HEADER INJECTION ---
+st.markdown("""
+    <div class="custom-header">
+        <p class="header-title">APPLICATION PORTAL</p>
+        <span style="color: #FF3366; font-weight: bold; font-family: sans-serif; cursor: pointer;">✕</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 # --------- Google Drive Folder ID ---------
 FOLDER_ID = "1edCJklkyUp4UtZl3zOh-HNsYOMmw8hsc"
