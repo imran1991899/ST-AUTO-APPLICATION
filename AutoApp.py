@@ -33,16 +33,23 @@ except ImportError:
 # --------- Page Setup (Neon Green & Black Theme) ---------
 st.set_page_config(
     page_title="Application Portal", 
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --------- Custom CSS for Neon Green & Black Theme matching the styling provided ---------
+# --------- Custom CSS for Neon Green & Black Theme matching the styling provided & wider layout ---------
 st.markdown("""
     <style>
     /* Main Background - Very Dark Gray/Black */
     .stApp {
         background-color: #0B0E0F;
+    }
+
+    /* Make the main block container wider to fill the screen as requested */
+    .block-container {
+        max-width: 98% !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
     }
     
     /* Header Style */
