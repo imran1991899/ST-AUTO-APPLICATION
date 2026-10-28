@@ -47,7 +47,7 @@ st.markdown("""
 
     /* Make the main block container wider to fill the screen as requested */
     .block-container {
-        max-width: 98% !important;
+        max-width: 80% !important;
         padding-left: 2rem !important;
         padding-right: 2rem !important;
     }
