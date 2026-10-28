@@ -1447,7 +1447,7 @@ if nav_selection == "ST Application":
                     e_mulatugas_list.append({"unit": i+1, "tarikh": str(t_val)})
                 with col_m3:
                     st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("Hapus", key=f"e_hapus_mulatugas_{i}"):
+                    if st.button("Hapus", key=f"e_hapus_mulatugas_{i}M"):
                         if st.session_state.tarikh_mulatugas_count > 1:
                             st.session_state.tarikh_mulatugas_count -= 1
                             st.rerun()
