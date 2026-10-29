@@ -146,9 +146,9 @@ st.markdown("""
     /* Center Streamlit Dialog / Modal */
     div[data-testid="stModal"] {
         position: fixed !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
+        top: 40% !important;
+        left: 40% !important;
+        transform: translate(-40%, -40%) !important;
     }
 
     /* Style custom Radio button container to match theme */
