@@ -143,6 +143,14 @@ st.markdown("""
         background-color: #00FF66 !important;
     }
     
+    /* Center Streamlit Dialog / Modal */
+    div[data-testid="stModal"] {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
     /* Style custom Radio button container to match theme */
     div[data-testid="stRadio"] > label {
         margin-bottom: 8px !important;
