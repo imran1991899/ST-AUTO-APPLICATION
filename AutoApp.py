@@ -830,39 +830,9 @@ if nav_selection == "ST Application":
                     st.session_state.evcs_models[idx]["brand_model"] = brand_model
                     st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: Guorui / GRD08-120SDE</p>", unsafe_allow_html=True)
 
-                    # Rated Input Power with inline group [-] [+]
-                    st.markdown("Rated Input Power (kW AC)")
-                    col_rip_in, col_rip_btn1, col_rip_btn2 = st.columns([6, 1, 1])
-                    with col_rip_in:
-                        rated_input_power = st.text_input("Rated Input Power (kW AC)", value=model["rated_input_power"], key=f"input_rated_input_power_{idx}", label_visibility="collapsed")
-                        st.session_state.evcs_models[idx]["rated_input_power"] = rated_input_power
-                    with col_rip_btn1:
-                        if st.button("-", key=f"minus_rip_{idx}", use_container_width=True):
-                            import re
-                            curr = st.session_state.evcs_models[idx]["rated_input_power"]
-                            nums = re.findall(r'\d+', curr)
-                            if nums:
-                                val = max(0, int(nums[0]) - 1)
-                                new_val = curr.replace(nums[0], str(val), 1)
-                            else:
-                                new_val = "0"
-                            st.session_state.evcs_models[idx]["rated_input_power"] = new_val
-                            st.session_state[f"input_rated_input_power_{idx}"] = new_val
-                            st.rerun()
-                    with col_rip_btn2:
-                        if st.button("+", key=f"plus_rip_{idx}", use_container_width=True):
-                            import re
-                            curr = st.session_state.evcs_models[idx]["rated_input_power"]
-                            nums = re.findall(r'\d+', curr)
-                            if nums:
-                                val = int(nums[0]) + 1
-                                new_val = curr.replace(nums[0], str(val), 1)
-                            else:
-                                new_val = "1"
-                            st.session_state.evcs_models[idx]["rated_input_power"] = new_val
-                            st.session_state[f"input_rated_input_power_{idx}"] = new_val
-                            st.rerun()
-                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10px;'>Example: 133 kW AC</p>", unsafe_allow_html=True)
+                    rated_input_power = st.text_input("Rated Input Power (kW AC)", value=model["rated_input_power"], key=f"input_rated_input_power_{idx}")
+                    st.session_state.evcs_models[idx]["rated_input_power"] = rated_input_power
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 133 kW AC</p>", unsafe_allow_html=True)
 
                     mode_of_charging = st.text_input("Mode of Charging", value=model["mode_of_charging"], key=f"mode_of_charging_{idx}")
                     st.session_state.evcs_models[idx]["mode_of_charging"] = mode_of_charging
@@ -873,198 +843,104 @@ if nav_selection == "ST Application":
                     st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: CSS2-5M-250A cable size 2 × 70 mm²+25mm²</p>", unsafe_allow_html=True)
 
                 with col_s2:
-                    # No. of Units with inline group [-] [+]
-                    st.markdown("No. of Units")
-                    col_nou_in, col_nou_btn1, col_nou_btn2 = st.columns([6, 1, 1])
-                    with col_nou_in:
-                        no_of_units = st.text_input("No. of Units", value=model["no_of_units"], key=f"input_no_of_units_{idx}", label_visibility="collapsed")
-                        st.session_state.evcs_models[idx]["no_of_units"] = no_of_units
-                    with col_nou_btn1:
-                        if st.button("-", key=f"minus_nou_{idx}", use_container_width=True):
-                            import re
-                            curr = st.session_state.evcs_models[idx]["no_of_units"]
-                            nums = re.findall(r'\d+', curr)
-                            if nums:
-                                val = max(0, int(nums[0]) - 1)
-                                new_val = curr.replace(nums[0], str(val), 1)
-                            else:
-                                new_val = "0"
-                            st.session_state.evcs_models[idx]["no_of_units"] = new_val
-                            st.session_state[f"input_no_of_units_{idx}"] = new_val
-                            st.rerun()
-                    with col_nou_btn2:
-                        if st.button("+", key=f"plus_nou_{idx}", use_container_width=True):
-                            import re
-                            curr = st.session_state.evcs_models[idx]["no_of_units"]
-                            nums = re.findall(r'\d+', curr)
-                            if nums:
-                                val = int(nums[0]) + 1
-                                new_val = curr.replace(nums[0], str(val), 1)
-                            else:
-                                new_val = "1"
-                            st.session_state.evcs_models[idx]["no_of_units"] = new_val
-                            st.session_state[f"input_no_of_units_{idx}"] = new_val
-                            st.rerun()
-                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10px;'>Example: 2</p>", unsafe_allow_html=True)
+                    no_of_units = st.text_input("No. of Units", value=model["no_of_units"], key=f"input_no_of_units_{idx}")
+                    st.session_state.evcs_models[idx]["no_of_units"] = no_of_units
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2</p>", unsafe_allow_html=True)
 
-                    # Max. Charging / Output Power with inline group [-] [+]
-                    st.markdown("Max. Charging / Output Power (AC or DC)")
-                    col_mcp_in, col_mcp_btn1, col_mcp_btn2 = st.columns([6, 1, 1])
-                    with col_mcp_in:
-                        max_charging_power = st.text_input("Max. Charging / Output Power (AC or DC)", value=model["max_charging_power"], key=f"input_max_charging_power_{idx}", label_visibility="collapsed")
-                        st.session_state.evcs_models[idx]["max_charging_power"] = max_charging_power
-                    with col_mcp_btn1:
-                        if st.button("-", key=f"minus_mcp_{idx}", use_container_width=True):
-                            import re
-                            curr = st.session_state.evcs_models[idx]["max_charging_power"]
-                            nums = re.findall(r'\d+', curr)
-                            if nums:
-                                val = max(0, int(nums[0]) - 1)
-                                new_val = curr.replace(nums[0], str(val), 1)
-                            else:
-                                new_val = "0"
-                            st.session_state.evcs_models[idx]["max_charging_power"] = new_val
-                            st.session_state[f"input_max_charging_power_{idx}"] = new_val
-                            st.rerun()
-                    with col_mcp_btn2:
-                        if st.button("+", key=f"plus_mcp_{idx}", use_container_width=True):
-                            import re
-                            curr = st.session_state.evcs_models[idx]["max_charging_power"]
-                            nums = re.findall(r'\d+', curr)
-                            if nums:
-                                val = int(nums[0]) + 1
-                                new_val = curr.replace(nums[0], str(val), 1)
-                            else:
-                                new_val = "1"
-                            st.session_state.evcs_models[idx]["max_charging_power"] = new_val
-                            st.session_state[f"input_max_charging_power_{idx}"] = new_val
-                            st.rerun()
-                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10px;'>Example: 120 kW / DC</p>", unsafe_allow_html=True)
+                    max_charging_power = st.text_input("Max. Charging / Output Power (AC or DC)", value=model["max_charging_power"], key=f"input_max_charging_power_{idx}")
+                    st.session_state.evcs_models[idx]["max_charging_power"] = max_charging_power
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 120 kW / DC</p>", unsafe_allow_html=True)
 
                     connector_type = st.text_input("Connector Type", value=model["connector_type"], key=f"connector_type_{idx}")
                     st.session_state.evcs_models[idx]["connector_type"] = connector_type
                     st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 8 × CCS 2</p>", unsafe_allow_html=True)
 
-                    # No. of Charging Bays with inline group [-] [+]
-                    st.markdown("No. of Charging Bays")
-                    col_nocb_in, col_nocb_btn1, col_nocb_btn2 = st.columns([6, 1, 1])
-                    with col_nocb_in:
-                        no_of_charging_bays = st.text_input("No. of Charging Bays", value=model["no_of_charging_bays"], key=f"input_no_of_charging_bays_{idx}", label_visibility="collapsed")
-                        st.session_state.evcs_models[idx]["no_of_charging_bays"] = no_of_charging_bays
-                    with col_nocb_btn1:
-                        if st.button("-", key=f"minus_nocb_{idx}", use_container_width=True):
-                            import re
-                            curr = st.session_state.evcs_models[idx]["no_of_charging_bays"]
-                            nums = re.findall(r'\d+', curr)
-                            if nums:
-                                val = max(0, int(nums[0]) - 1)
-                                new_val = curr.replace(nums[0], str(val), 1)
-                            else:
-                                new_val = "0"
-                            st.session_state.evcs_models[idx]["no_of_charging_bays"] = new_val
-                            st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
-                            st.rerun()
-                    with col_nocb_btn2:
-                        if st.button("+", key=f"plus_nocb_{idx}", use_container_width=True):
-                            import re
-                            curr = st.session_state.evcs_models[idx]["no_of_charging_bays"]
-                            nums = re.findall(r'\d+', curr)
-                            if nums:
-                                val = int(nums[0]) + 1
-                                new_val = curr.replace(nums[0], str(val), 1)
-                            else:
-                                new_val = "1"
-                            st.session_state.evcs_models[idx]["no_of_charging_bays"] = new_val
-                            st.session_state[f"input_no_of_charging_bays_{idx}"] = new_val
-                            st.rerun()
-                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10px;'>Example: 10</p>", unsafe_allow_html=True)
+                    no_of_charging_bays = st.text_input("No. of Charging Bays", value=model["no_of_charging_bays"], key=f"input_no_of_charging_bays_{idx}")
+                    st.session_state.evcs_models[idx]["no_of_charging_bays"] = no_of_charging_bays
+                    st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 10</p>", unsafe_allow_html=True)
 
                 # GPS Coordinate Latitude Longitude & Map Dialog (Integrated inside each model form)
-                st.markdown("GPS Coordinate Latitude Longitude")
-                col_gps_in, col_gps_btn = st.columns([4, 1])
-                with col_gps_in:
-                    gps_lat = st.text_input("Latitude Longitude", value=model.get("gps_lat", ""), key=f"input_gps_lat_{idx}", placeholder="2.800693, 101.686073")
-                    st.session_state.evcs_models[idx]["gps_lat"] = gps_lat
-                with col_gps_btn:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    @st.dialog(f"🗺️ Select Location on Map - Model {idx + 1}", width="large")
-                    def gps_map_dialog(m_idx):
-                        st.markdown("Search a location or click on the map to pin coordinates:", unsafe_allow_html=True)
-                        
-                        import urllib.request
-                        import urllib.parse
-                        import json
+                gps_lat = st.text_input("GPS Coordinate Latitude Longitude", value=model.get("gps_lat", ""), key=f"input_gps_lat_{idx}", placeholder="2.800693, 101.686073")
+                st.session_state.evcs_models[idx]["gps_lat"] = gps_lat
+                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693, 101.686073</p>", unsafe_allow_html=True)
 
-                        search_query = st.text_input("🔍 Search location (e.g. Nilai, Sepang, KLCC)", key=f"map_search_input_{m_idx}")
-                        
-                        target_lat = None
-                        target_lon = None
-                        
-                        if search_query and len(search_query.strip()) > 2:
-                            try:
-                                encoded_q = urllib.parse.quote(search_query)
-                                url = f"https://nominatim.openstreetmap.org/search?q={encoded_q}&format=json&limit=5"
-                                req = urllib.request.Request(url, headers={'User-Agent': 'StreamlitApp/1.0'})
-                                with urllib.request.urlopen(req) as response:
-                                    results = json.loads(response.read().decode())
-                                    if results:
-                                        options = {res['display_name']: (float(res['lat']), float(res['lon'])) for res in results}
-                                        selected_place = st.selectbox("📍 Select suggestion:", list(options.keys()), key=f"map_search_suggestions_{m_idx}")
-                                        if selected_place:
-                                            target_lat, target_lon = options[selected_place]
-                            except Exception as e:
-                                st.error(f"Search error: {e}")
+                @st.dialog(f"🗺️ Select Location on Map - Model {idx + 1}", width="large")
+                def gps_map_dialog(m_idx):
+                    st.markdown("Search a location or click on the map to pin coordinates:", unsafe_allow_html=True)
+                    
+                    import urllib.request
+                    import urllib.parse
+                    import json
 
+                    search_query = st.text_input("🔍 Search location (e.g. Nilai, Sepang, KLCC)", key=f"map_search_input_{m_idx}")
+                    
+                    target_lat = None
+                    target_lon = None
+                    
+                    if search_query and len(search_query.strip()) > 2:
                         try:
-                            import folium
-                            from streamlit_folium import st_folium
-                            
-                            current_val = st.session_state.evcs_models[m_idx].get("gps_lat", "2.800693")
-                            try:
-                                init_lat = target_lat if target_lat is not None else float(current_val.split(',')[0].strip() if ',' in current_val else current_val or 2.800693)
-                            except:
-                                init_lat = 2.800693
-                            current_lon = st.session_state.evcs_models[m_idx].get("gps_lon", "101.686073")
-                            try:
-                                init_lon = target_lon if target_lon is not None else float(current_lon or 101.686073)
-                            except:
-                                init_lon = 101.686073
-
-                            m = folium.Map(location=[init_lat, init_lon], zoom_start=14 if target_lat else 13)
-                            folium.Marker([init_lat, init_lon], popup="Selected Location", tooltip="Pinned Location").add_to(m)
-                            m.add_child(folium.LatLngPopup())
-                            
-                            map_data = st_folium(m, use_container_width=True, height=500, key=f"map_popup_interactive_{m_idx}")
-                            
-                            if map_data and map_data.get("last_clicked"):
-                                clicked_lat = map_data["last_clicked"]["lat"]
-                                clicked_lon = map_data["last_clicked"]["lng"]
-                                coord_str = f"{clicked_lat}, {clicked_lon}"
-                                st.session_state.evcs_models[m_idx]["gps_lat"] = coord_str
-                                st.session_state.evcs_models[m_idx]["gps_lon"] = str(clicked_lon)
-                                st.session_state[f"input_gps_lat_{m_idx}"] = coord_str
-                                st.success(f"Saved Coordinates: {coord_str}")
-                                time.sleep(0.5)
-                                st.rerun()
+                            encoded_q = urllib.parse.quote(search_query)
+                            url = f"https://nominatim.openstreetmap.org/search?q={encoded_q}&format=json&limit=5"
+                            req = urllib.request.Request(url, headers={'User-Agent': 'StreamlitApp/1.0'})
+                            with urllib.request.urlopen(req) as response:
+                                results = json.loads(response.read().decode())
+                                if results:
+                                    options = {res['display_name']: (float(res['lat']), float(res['lon'])) for res in results}
+                                    selected_place = st.selectbox("📍 Select suggestion:", list(options.keys()), key=f"map_search_suggestions_{m_idx}")
+                                    if selected_place:
+                                        target_lat, target_lon = options[selected_place]
                         except Exception as e:
-                            st.warning(f"Interactive map requires folium and streamlit-folium. Error: {e}")
-                            dlg_lat = st.text_input("Latitude", value="2.800693", key=f"dlg_lat_{m_idx}")
-                            dlg_lon = st.text_input("Longitude", value="101.686073", key=f"dlg_lon_{m_idx}")
-                            if st.button("✅ Save Coordinates", key=f"save_coords_{m_idx}", use_container_width=True):
-                                coord_str = f"{dlg_lat}, {dlg_lon}"
-                                st.session_state.evcs_models[m_idx]["gps_lat"] = coord_str
-                                st.session_state.evcs_models[m_idx]["gps_lon"] = dlg_lon
-                                st.session_state[f"input_gps_lat_{m_idx}"] = coord_str
-                                st.success("Coordinates saved!")
-                                time.sleep(0.5)
-                                st.rerun()
+                            st.error(f"Search error: {e}")
 
-                        if st.button("✅ Close / Done", key=f"close_dialog_{m_idx}", use_container_width=True):
+                    try:
+                        import folium
+                        from streamlit_folium import st_folium
+                        
+                        current_val = st.session_state.evcs_models[m_idx].get("gps_lat", "2.800693")
+                        try:
+                            init_lat = target_lat if target_lat is not None else float(current_val.split(',')[0].strip() if ',' in current_val else current_val or 2.800693)
+                        except:
+                            init_lat = 2.800693
+                        current_lon = st.session_state.evcs_models[m_idx].get("gps_lon", "101.686073")
+                        try:
+                            init_lon = target_lon if target_lon is not None else float(current_lon or 101.686073)
+                        except:
+                            init_lon = 101.686073
+
+                        m = folium.Map(location=[init_lat, init_lon], zoom_start=14 if target_lat else 13)
+                        folium.Marker([init_lat, init_lon], popup="Selected Location", tooltip="Pinned Location").add_to(m)
+                        m.add_child(folium.LatLngPopup())
+                        
+                        map_data = st_folium(m, use_container_width=True, height=500, key=f"map_popup_interactive_{m_idx}")
+                        
+                        if map_data and map_data.get("last_clicked"):
+                            clicked_lat = map_data["last_clicked"]["lat"]
+                            clicked_lon = map_data["last_clicked"]["lng"]
+                            coord_str = f"{clicked_lat}, {clicked_lon}"
+                            st.session_state.evcs_models[m_idx]["gps_lat"] = coord_str
+                            st.session_state.evcs_models[m_idx]["gps_lon"] = str(clicked_lon)
+                            st.session_state[f"input_gps_lat_{m_idx}"] = coord_str
+                            st.success(f"Saved Coordinates: {coord_str}")
+                            time.sleep(0.5)
+                            st.rerun()
+                    except Exception as e:
+                        st.warning(f"Interactive map requires folium and streamlit-folium. Error: {e}")
+                        dlg_lat = st.text_input("Latitude", value="2.800693", key=f"dlg_lat_{m_idx}")
+                        dlg_lon = st.text_input("Longitude", value="101.686073", key=f"dlg_lon_{m_idx}")
+                        if st.button("✅ Save Coordinates", key=f"save_coords_{m_idx}", use_container_width=True):
+                            coord_str = f"{dlg_lat}, {dlg_lon}"
+                            st.session_state.evcs_models[m_idx]["gps_lat"] = coord_str
+                            st.session_state.evcs_models[m_idx]["gps_lon"] = dlg_lon
+                            st.session_state[f"input_gps_lat_{m_idx}"] = coord_str
+                            st.success("Coordinates saved!")
+                            time.sleep(0.5)
                             st.rerun()
 
-                    if st.button("🗺️ Map", key=f"btn_open_map_{idx}"):
-                        gps_map_dialog(idx)
-                st.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -15px;'>Example: 2.800693, 101.686073</p>", unsafe_allow_html=True)
+                    if st.button("✅ Close / Done", key=f"close_dialog_{m_idx}", use_container_width=True):
+                        st.rerun()
+
+                if st.button("🗺️ Map", key=f"btn_open_map_{idx}"):
+                    gps_map_dialog(idx)
 
         st.markdown("---")
         st.subheader("📋 Application Sections (Bahagian A - G)")
@@ -1738,6 +1614,20 @@ if nav_selection == "ST Application":
                 header = rows[0]
                 data_rows = rows[1:]
                 
+                @st.dialog("⚠️ Confirmation", width="small")
+                def confirm_delete_dialog(r_num, p_name):
+                    st.markdown(f"Are you sure you want to delete **{p_name}**?")
+                    col_y, col_n = st.columns(2)
+                    with col_y:
+                        if st.button("Yes", use_container_width=True, key=f"dlg_yes_{r_num}"):
+                            delete_row_from_gsheet(gsheet_id, r_num)
+                            st.success(f"Deleted row {r_num} successfully!")
+                            time.sleep(1)
+                            st.rerun()
+                    with col_n:
+                        if st.button("No", use_container_width=True, key=f"dlg_no_{r_num}"):
+                            st.rerun()
+
                 for idx, r in enumerate(data_rows):
                     row_num = idx + 2
                     proj_name = r[1] if len(r) > 1 and r[1] else f"Project (Row {row_num})"
@@ -1795,10 +1685,7 @@ if nav_selection == "ST Application":
 
                         with col_act4:
                             if st.button("🗑️ Delete", key=f"btn_del_{row_num}"):
-                                delete_row_from_gsheet(gsheet_id, row_num)
-                                st.success(f"Deleted row {row_num} successfully!")
-                                time.sleep(1)
-                                st.rerun()
+                                confirm_delete_dialog(row_num, proj_name)
         except Exception as e:
             st.error(f"Could not load existing applications: {e}")
 
