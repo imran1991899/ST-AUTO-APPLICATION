@@ -143,14 +143,6 @@ st.markdown("""
         background-color: #00FF66 !important;
     }
     
-    /* Center Streamlit Dialog / Modal */
-    div[data-testid="stModal"] {
-        position: fixed !important;
-        top: 40% !important;
-        left: 40% !important;
-        transform: translate(-40%, -40%) !important;
-    }
-
     /* Style custom Radio button container to match theme */
     div[data-testid="stRadio"] > label {
         margin-bottom: 8px !important;
@@ -173,6 +165,14 @@ st.markdown("""
         border-radius: 10px !important;
         background-color: #111516 !important;
         padding: 10px !important;
+    }
+
+    /* Center Streamlit Dialog / Modal */
+    div[data-testid="stModal"] {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -1624,7 +1624,7 @@ if nav_selection == "ST Application":
                 
                 @st.dialog("⚠️ Confirmation", width="small")
                 def confirm_delete_dialog(r_num, p_name):
-                    st.markdown(f"Are you sure you want to delete **{p_name}**?")
+                    st.markdown(f"ARE YOU SURE YOU WANT TO DELETE {p_name}?")
                     col_y, col_n = st.columns(2)
                     with col_y:
                         if st.button("Yes", use_container_width=True, key=f"dlg_yes_{r_num}"):
