@@ -417,11 +417,24 @@ def update_row_in_gsheet(sheet_id, row_index, values):
     ).execute()
 
 def delete_row_from_gsheet(sheet_id, row_index):
-    sheet = sheets_service.spreadsheets()
-    sheet.values().clear(
-        spreadsheetId=sheet_id,
-        range=f"A{row_index}:Z{row_index}"
-    ).execute()
+    sheet_metadata = sheets_service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    sheet_id_int = sheet_metadata['sheets'][0]['properties']['sheetId']
+    
+    body = {
+        "requests": [
+            {
+                "deleteDimension": {
+                    "range": {
+                        "sheetId": sheet_id_int,
+                        "dimension": "ROWS",
+                        "startIndex": row_index - 1,
+                        "endIndex": row_index
+                    }
+                }
+            }
+        ]
+    }
+    sheets_service.spreadsheets().batchUpdate(spreadsheetId=sheet_id, body=body).execute()
 
 def get_all_gsheet_rows(sheet_id):
     sheet = sheets_service.spreadsheets()
