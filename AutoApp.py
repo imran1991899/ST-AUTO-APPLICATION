@@ -1570,6 +1570,34 @@ if nav_selection == "ST Application":
                         else:
                             append_row_to_gsheet(gsheet_id, row, header)
                             st.success("New Application Submitted Successfully!")
+                        
+                        # ==========================================
+                        # 🚀 ADD THE GITHUB API TRIGGER HERE
+                        # ==========================================
+                        import requests
+                        try:
+                            github_token = st.secrets.get("GITHUB_TOKEN", "")
+                            repo_owner = st.secrets.get("GITHUB_REPO_OWNER", "")
+                            repo_name = st.secrets.get("GITHUB_REPO_NAME", "")
+                            
+                            if github_token and repo_owner and repo_name:
+                                url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/dispatches"
+                                headers = {
+                                    "Authorization": f"Bearer {github_token}",
+                                    "Accept": "application/vnd.github+json",
+                                }
+                                payload = {
+                                    "event_type": "run-oas-automation",
+                                    "client_payload": {"project_name": project_name}
+                                }
+                                resp = requests.post(url, json=payload, headers=headers)
+                                if resp.status_code == 204:
+                                    st.success("🤖 Background automation worker triggered on GitHub!")
+                                else:
+                                    st.warning(f"Saved to Sheets, but GitHub trigger failed (Code: {resp.status_code})")
+                        except Exception as trig_err:
+                            st.warning(f"Could not trigger GitHub background runner: {trig_err}")
+                        # ==========================================
 
                         st.session_state.update({
                             "app_mode": "existing",
