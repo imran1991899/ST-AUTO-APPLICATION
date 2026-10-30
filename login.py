@@ -1,10 +1,7 @@
 import os
 import time
 import requests
-import json
-import gspread
 from PIL import Image
-from google.oauth2.service_account import Credentials
 from playwright.sync_api import sync_playwright
 
 def resize_screenshot_to_limit(image_path, max_size_kb=600):
@@ -76,34 +73,6 @@ def get_base64_image(image_path):
     import base64
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
-
-def fetch_latest_gsheet_row():
-    """Fetches the latest submitted application data from Google Sheets."""
-    print("Connecting to Google Sheets...")
-    service_account_info = os.environ.get("GOOGLE_CLIENT_SECRET_JSON")
-    if not service_account_info:
-        print("Warning: GOOGLE_CLIENT_SECRET_JSON environment variable not set.")
-        return None
-
-    try:
-        creds_dict = json.loads(service_account_info)
-        scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-        client = gspread.authorize(creds)
-
-        sheet = client.open("general_applications").sheet1
-        all_rows = sheet.get_all_values()
-        
-        if len(all_rows) <= 1:
-            print("No submission rows found in sheet.")
-            return None
-            
-        latest_row = all_rows[-1]
-        print(f"Successfully fetched data for Project: '{latest_row[1]}'")
-        return latest_row
-    except Exception as e:
-        print(f"Error reading from Google Sheets: {e}")
-        return None
 
 def navigate_to_e_application(page):
     """Searches for e-Application in the top navigation bar, clicks it, and takes a screenshot."""
@@ -183,15 +152,6 @@ def search_after_hantar(page):
 
 def process_bahagian_sections(page):
     """Iterates through Bahagian A to Bahagian G, adding buffer, text fill/document uploads, and screenshots."""
-    
-    # Fetch data from Google Sheets before looping sections
-    row = fetch_latest_gsheet_row()
-    project_name = row[1] if row and len(row) > 1 else ""
-    no_lot = row[10] if row and len(row) > 10 else ""
-    poskod = row[4] if row and len(row) > 4 else ""
-    daerah = row[5] if row and len(row) > 5 else ""
-    mukim = row[6] if row and len(row) > 6 else ""
-
     sections = ['Bahagian A', 'Bahagian B', 'Bahagian C', 'Bahagian D', 'Bahagian E', 'Bahagian F', 'Bahagian G']
     
     for section in sections:
@@ -211,22 +171,10 @@ def process_bahagian_sections(page):
             print(f"Buffer active for {section}: waiting for manual/automated information filling...")
             time.sleep(3) # Buffer time for section load and user information input preparation
             
-            # --- GOOGLE SHEETS DATA FILLING LOGIC ---
-            if section == 'Bahagian A' and project_name:
-                page.locator("input[name*='project'], input[name*='nama_projek']").first.fill(project_name)
-            elif section == 'Bahagian E':
-                if no_lot:
-                    page.locator("input[name*='lot'], input[id*='lot']").first.fill(no_lot)
-                if poskod:
-                    page.locator("input[name*='poskod'], input[id*='poskod']").first.fill(poskod)
-                if daerah:
-                    page.locator("input[name*='daerah'], input[id*='daerah']").first.fill(daerah)
-                if mukim:
-                    page.locator("input[name*='mukim'], input[id*='mukim']").first.fill(mukim)
-            elif section == 'Bahagian F':
-                checkboxes = page.locator("input[type='checkbox']")
-                for i in range(checkboxes.count()):
-                    checkboxes.nth(i).check(force=True)
+            # TODO: add function add text and document upload
+            # Example text fill / document upload placeholder logic:
+            # page.fill("input[name='example']", "sample text")
+            # page.set_input_files("input[type='file']", "path/to/document.pdf")
             
             # Take screenshot for the current Bahagian
             safe_name = section.replace(" ", "_").lower()
@@ -265,6 +213,11 @@ def process_bahagian_sections(page):
 def upload_files(page):
     """Add your file upload automation logic here after navigating to e-Application."""
     print("Ready to upload files...")
+    # Example:
+    # page.goto("https://oas.st.gov.my/en/your-upload-page-url")
+    # page.set_input_files("input[type='file']", "path/to/your/file.pdf")
+    # page.click("button:has-text('Upload')")
+    # page.wait_for_timeout(5000)
 
 def login_oas():
     email = os.environ.get("OAS_EMAIL")
