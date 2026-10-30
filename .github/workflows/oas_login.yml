@@ -1,80 +1,84 @@
 name: OAS Ollama Auto Login
 
 on:
-workflow_dispatch:
-schedule:
-- cron: '0 0 * * *'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
 
 jobs:
-login:
-runs-on: ubuntu-latest
+  login:
+    runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  - name: Set up Python
-    uses: actions/setup-python@v5
-    with:
-      python-version: '3.11'
-      cache: 'pip'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip' # Caches pip dependencies automatically
 
-  - name: Cache Ollama Binary and Models
-    uses: actions/cache@v4
-    id: ollama-cache
-    with:
-      path: |
-        ~/.ollama
-        /usr/local/bin/ollama
-      key: ollama-cache-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
-      restore-keys: |
-        ollama-cache-${{ runner.os }}-
+      - name: Cache Ollama Binary and Models
+        uses: actions/cache@v4
+        id: ollama-cache
+        with:
+          path: |
+            ~/.ollama
+            /usr/local/bin/ollama
+          key: ollama-cache-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ollama-cache-${{ runner.os }}-
 
-  - name: Install Ollama (If not cached)
-    if: steps.ollama-cache.outputs.cache-hit != 'true'
-    run: |
-      curl -fsSL https://ollama.com/install.sh | sh
+      - name: Install Ollama (If not cached)
+        if: steps.ollama-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
 
-  - name: Start Ollama Service and Pull Model
-    run: |
-      ollama serve &
-      echo "Waiting for Ollama service to start..."
-      until curl -s http://localhost:11434/api/tags > /dev/null; do
-        sleep 1
-      done
-      ollama pull moondream
+      - name: Start Ollama Service and Pull Model
+        run: |
+          # Start ollama in background
+          ollama serve &
+          echo "Waiting for Ollama service to start..."
+          
+          # Quick loop check instead of fixed sleep
+          until curl -s http://localhost:11434/api/tags > /dev/null; do
+            sleep 1
+          done
+          
+          # Pulls model if missing, or skips instantly if cached locally
+          ollama pull moondream
 
-  - name: Install Python dependencies
-    run: |
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
-      playwright install chromium
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install chromium
 
-  - name: Run Login Script with Ollama and Google Sheets Integration
-    env:
-      OAS_EMAIL: ${{ secrets.OAS_EMAIL }}
-      OAS_PASSWORD: ${{ secrets.OAS_PASSWORD }}
-      GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-    run: |
-      python login.py
+      - name: Run Login Script with Ollama
+        env:
+          OAS_EMAIL: ${{ secrets.OAS_EMAIL }}
+          OAS_PASSWORD: ${{ secrets.OAS_PASSWORD }}
+        run: |
+          python login.py
 
-  - name: Upload Captured Artifacts
-    if: always()
-    uses: actions/upload-artifact@v4
-    with:
-      name: login-snapshots
-      path: |
-        captcha.png
-        success_login.png
-        e-application.png
-        Click_LE2EVCS - Lesen Awam Pengagihan EV Charging Station.png
-        before_hantar.png
-        after_hantar.png
-        bahagian_a.png
-        bahagian_b.png
-        bahagian_c.png
-        bahagian_d.png
-        bahagian_e.png
-        bahagian_f.png
-        bahagian_g.png
-        bahagian_g_simpan_draf.png
+      - name: Upload Captured Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: login-snapshots
+          path: |
+            captcha.png
+            success_login.png
+            e-application.png
+            Click_LE2EVCS - Lesen Awam Pengagihan EV Charging Station.png
+            before_hantar.png
+            after_hantar.png
+            bahagian_a.png
+            bahagian_b.png
+            bahagian_c.png
+            bahagian_d.png
+            bahagian_e.png
+            bahagian_f.png
+            bahagian_g.png
+            bahagian_g_simpan_draf.png
