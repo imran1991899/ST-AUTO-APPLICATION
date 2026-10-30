@@ -551,14 +551,14 @@ def generate_project_summary_pdf(evcs_models):
     picture_element = ""
     for m in evcs_models:
         brand = m.get("brand_model", "")
-        if "120" in brand and os.path.exists("DC_120.png"):
-            picture_element = RLImage("DC_120.png", width=180, height=330)
+        if "120" in brand and os.path.exists("imgEVC/DC_120.png"):
+            picture_element = RLImage("imgEVC/DC_120.png", width=180, height=330)
             break
-        elif "240" in brand and os.path.exists("DC_240.png"):
-            picture_element = RLImage("DC_240.png", width=180, height=330)
+        elif "240" in brand and os.path.exists("imgEVC/DC_240.png"):
+            picture_element = RLImage("imgEVC/DC_240.png", width=180, height=330)
             break
     if not picture_element and os.path.exists("DC_120.png"):
-        picture_element = RLImage("DC_120.png", width=180, height=330)
+        picture_element = RLImage("imgEVC/DC_120.png", width=180, height=330)
 
     if picture_element:
         table_data[2][-1] = picture_element
@@ -742,10 +742,10 @@ if nav_selection == "ST Application":
             with st.container(border=True):
                 ic1, ic2, ic3 = st.columns([1.8, 2, 1])
                 with ic2:
-                    if os.path.exists("DC_120.png"):
-                        st.image("DC_120.png", width=90)
+                    if os.path.exists("imgEVC/DC_120.png"):
+                        st.image("imgEVC/DC_120.png", width=90)
                     else:
-                        st.warning("DC_120.png not found")
+                        st.warning("imgEVC/DC_120.png not found")
                 if st.button("Guorui / GRD08-120SDE", use_container_width=True, key="btn_120"):
                     select_model_preset(active_idx, "120")
                     st.rerun()
@@ -754,10 +754,10 @@ if nav_selection == "ST Application":
             with st.container(border=True):
                 ic1, ic2, ic3 = st.columns([1.8, 2, 1])
                 with ic2:
-                    if os.path.exists("DC_240.png"):
-                        st.image("DC_240.png", width=90)
+                    if os.path.exists("imgEVC/DC_240.png"):
+                        st.image("imgEVC/DC_240.png", width=90)
                     else:
-                        st.warning("DC_240.png not found")
+                        st.warning("imgEVC/DC_240.png not found")
                 if st.button("Guorui / GRD08-240SDE", use_container_width=True, key="btn_240"):
                     select_model_preset(active_idx, "240")
                     st.rerun()
