@@ -170,7 +170,7 @@ st.markdown("""
     /* Center Streamlit Dialog / Modal */
     div[data-testid="stModal"] {
         position: fixed !important;
-        top: -100% !important;
+        top: 100% !important;
         left: 30% !important;
         transform: translate(-50%, -50%) !important;
     }
