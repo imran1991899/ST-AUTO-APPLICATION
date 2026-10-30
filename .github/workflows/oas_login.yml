@@ -2,6 +2,8 @@ name: OAS Ollama Auto Login
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types: [run-oas-automation]
   schedule:
     - cron: '0 0 * * *'
 
@@ -17,7 +19,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip' # Caches pip dependencies automatically
+          cache: 'pip'
 
       - name: Cache Ollama Binary and Models
         uses: actions/cache@v4
@@ -37,16 +39,10 @@ jobs:
 
       - name: Start Ollama Service and Pull Model
         run: |
-          # Start ollama in background
           ollama serve &
-          echo "Waiting for Ollama service to start..."
-          
-          # Quick loop check instead of fixed sleep
           until curl -s http://localhost:11434/api/tags > /dev/null; do
             sleep 1
           done
-          
-          # Pulls model if missing, or skips instantly if cached locally
           ollama pull moondream
 
       - name: Install Python dependencies
@@ -59,6 +55,8 @@ jobs:
         env:
           OAS_EMAIL: ${{ secrets.OAS_EMAIL }}
           OAS_PASSWORD: ${{ secrets.OAS_PASSWORD }}
+          # Pass Google credentials if your script reads them from env
+          GOOGLE_CLIENT_SECRET_JSON: ${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}
         run: |
           python login.py
 
@@ -71,14 +69,4 @@ jobs:
             captcha.png
             success_login.png
             e-application.png
-            Click_LE2EVCS - Lesen Awam Pengagihan EV Charging Station.png
-            before_hantar.png
-            after_hantar.png
-            bahagian_a.png
-            bahagian_b.png
-            bahagian_c.png
-            bahagian_d.png
-            bahagian_e.png
-            bahagian_f.png
-            bahagian_g.png
-            bahagian_g_simpan_draf.png
+            *.png
