@@ -1,60 +1,110 @@
 import os
 import time
+import json
 import requests
 from PIL import Image
 from playwright.sync_api import sync_playwright
 
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
+def fetch_latest_submission_from_sheets():
+    """Fetches the latest application submission row from Google Sheets for background auto-fill."""
+    print("Fetching latest submission from Google Sheets...")
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+    if not creds_json:
+        print("GOOGLE_CREDENTIALS_JSON environment variable not set. Running with default dummy data.")
+        return get_dummy_application_data()
+    
+    try:
+        from google.oauth2 import service_account
+        SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly', 'https://www.googleapis.com/auth/drive.readonly']
+        creds_dict = json.loads(creds_json)
+        creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+        
+        drive_service = build('drive', 'v3', credentials=creds)
+        sheets_service = build('sheets', 'v4', credentials=creds)
+        
+        FOLDER_ID = "1edCJklkyUp4UtZl3zOh-HNsYOMmw8hsc"
+        query = f"'{FOLDER_ID}' in parents and name = 'general_applications' and mimeType = 'application/vnd.google-apps.spreadsheet'"
+        response = drive_service.files().list(q=query, fields="files(id, name)").execute()
+        files = response.get("files", [])
+        
+        if not files:
+            print("General applications sheet not found in Drive. Using fallback dummy data.")
+            return get_dummy_application_data()
+            
+        sheet_id = files[0]["id"]
+        result = sheets_service.spreadsheets().values().get(spreadsheetId=sheet_id, range="A:AD").execute()
+        rows = result.get("values", [])
+        
+        if len(rows) <= 1:
+            print("No data rows found in spreadsheet. Using fallback dummy data.")
+            return get_dummy_application_data()
+            
+        header = rows[0]
+        latest_row = rows[-1]  # Get the most recent submission
+        
+        app_data = dict(zip(header, latest_row))
+        print(f"Successfully loaded submission for project: {app_data.get('Project Name')}")
+        return app_data
+    except Exception as e:
+        print(f"Error fetching from Google Sheets: {e}. Using fallback dummy data.")
+        return get_dummy_application_data()
+
+def get_dummy_application_data():
+    return {
+        "Project Name": "Sample EVCS Project Nilai",
+        "Negeri": "Negeri Sembilan",
+        "PBT": "Nilai Municipal Council",
+        "Poskod": "71800",
+        "Daerah": "Seremban",
+        "Mukim": "Labu",
+        "Kawasan": "Bandar Baru Nilai",
+        "Taman / Tempat": "Taman Scientex",
+        "Jalan": "Persiaran Utama",
+        "No. Lot / No. Unit / Blok / PT": "Lot 1234",
+        "Hak Milik Bangunan": "MILIK SENDIRI",
+        "Kedudukan Premis": "LOT TEPI",
+        "Brand / Model": "Guorui / GRD08-120SDE",
+        "No. of Units": "2",
+        "Rated Input Power (kW AC)": "133 kW AC",
+        "Max. Charging Power": "120 kW / DC",
+        "Mode of Charging": "Mode 4",
+        "Connector Type": "CCS 2",
+        "Output Cable Size": "CSS2-5M-250A",
+        "No. of Charging Bays": "4",
+        "GPS Latitude": "2.800693, 101.686073"
+    }
+
 def resize_screenshot_to_limit(image_path, max_size_kb=600):
-    """Resizes and compresses an image until it is under max_size_kb (600KB)."""
     if not os.path.exists(image_path):
         return
-    
     max_bytes = max_size_kb * 1024
     if os.path.getsize(image_path) <= max_bytes:
         return
-
-    print(f"Compressing {image_path} to be under {max_size_kb}KB...")
     try:
         with Image.open(image_path) as img:
-            # Convert RGBA to RGB if saving as JPEG
             if img.mode in ("RGBA", "P"):
                 img = img.convert("RGB")
-            
             quality = 95
             img.save(image_path, "JPEG", quality=quality)
-            
             while os.path.getsize(image_path) > max_bytes and quality > 10:
                 quality -= 10
                 img.save(image_path, "JPEG", quality=quality)
-            
-            # If still too large, downscale dimensions
-            scale = 0.9
-            while os.path.getsize(image_path) > max_bytes and scale > 0.1:
-                new_width = int(img.width * scale)
-                new_height = int(img.height * scale)
-                resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                resized_img.save(image_path, "JPEG", quality=quality)
-                scale -= 0.1
-
-        print(f"Successfully compressed {image_path} to {os.path.getsize(image_path) / 1024:.2f}KB")
     except Exception as e:
         print(f"Error compressing screenshot {image_path}: {e}")
 
 def ask_ollama_to_solve_captcha(image_path):
     print("Sending CAPTCHA image to lightweight Ollama vision model (moondream)...")
     url = "http://localhost:11434/api/generate"
-    
     payload = {
         "model": "moondream",
         "prompt": "Read the numbers in this image. Output only the digits, with no extra text or spaces.",
         "images": [get_base64_image(image_path)],
         "stream": False,
-        "options": {
-            "temperature": 0.0,
-            "num_predict": 10
-        }
+        "options": {"temperature": 0.0, "num_predict": 10}
     }
-
     try:
         response = requests.post(url, json=payload, timeout=60)
         if response.status_code == 200:
@@ -62,12 +112,9 @@ def ask_ollama_to_solve_captcha(image_path):
             clean_text = "".join(c for c in result if c.isalnum())
             print(f"Ollama successfully read CAPTCHA: '{clean_text}'")
             return clean_text
-        else:
-            print(f"Ollama API error: {response.text}")
-            return ""
     except Exception as e:
         print(f"Failed to connect to local Ollama: {e}")
-        return ""
+    return ""
 
 def get_base64_image(image_path):
     import base64
@@ -75,149 +122,140 @@ def get_base64_image(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 def navigate_to_e_application(page):
-    """Searches for e-Application in the top navigation bar, clicks it, and takes a screenshot."""
     print("Searching for e-Application...")
     try:
-        # Dynamically wait for the top navigation menu link to appear
         e_app_element = page.locator("a:has-text('e-Application')").first
         e_app_element.wait_for(state="visible", timeout=10000)
         e_app_element.click(force=True)
-        print("Clicked e-Application successfully.")
-
-        # Wait for content load dynamically
         page.wait_for_load_state("domcontentloaded")
-
-        # Take screenshot for e-Application verification
         page.screenshot(path="e-application.png")
         resize_screenshot_to_limit("e-application.png", 600)
         print("Saved e-application.png successfully.")
-
     except Exception as e:
         print(f"Error navigating to e-Application: {e}")
-        page.screenshot(path="e-application.png")
-        resize_screenshot_to_limit("e-application.png", 600)
 
 def navigate_to_evcs_application(page):
-    """Searches for and clicks the 'LE2EVCS - Lesen Awam Pengagihan EV Charging Station' link and takes a screenshot."""
-    print("Searching for LE2EVCS - Lesen Awam Pengagihan EV Charging Station link...")
+    print("Searching for LE2EVCS link...")
     link_text = "LE2EVCS - Lesen Awam Pengagihan EV Charging Station"
-    screenshot_name = f"Click_{link_text}.png"
-
     try:
-        # Dynamically wait for the specific link to appear
         evcs_link = page.locator(f"a:has-text('{link_text}')").first
         evcs_link.wait_for(state="visible", timeout=10000)
         evcs_link.click(force=True)
-        print(f"Clicked '{link_text}' successfully.")
-
-        # Wait for load state
         page.wait_for_load_state("domcontentloaded")
-
-        # Take screenshot after link click
-        page.screenshot(path=screenshot_name)
-        resize_screenshot_to_limit(screenshot_name, 600)
-        print(f"Saved '{screenshot_name}' successfully.")
-
+        page.screenshot(path=f"Click_{link_text}.png")
+        resize_screenshot_to_limit(f"Click_{link_text}.png", 600)
+        print("Clicked LE2EVCS link successfully.")
     except Exception as e:
         print(f"Error clicking LE2EVCS link: {e}")
-        page.screenshot(path=screenshot_name)
-        resize_screenshot_to_limit(screenshot_name, 600)
 
 def search_after_hantar(page):
-    """Searches for the button/element containing 'Hantar', clicks it, takes a screenshot, and saves another screenshot afterwards."""
-    print("Searching for 'Hantar' button/element to click...")
+    print("Searching for 'Hantar' button/element...")
     try:
         hantar_element = page.locator("button:has-text('Hantar'), input[type='submit'][value*='Hantar'], a:has-text('Hantar')").first
         hantar_element.wait_for(state="visible", timeout=10000)
-        
-        # Take screenshot before or right as we locate/interact with Hantar
         page.screenshot(path="before_hantar.png")
         resize_screenshot_to_limit("before_hantar.png", 600)
-        print("Saved before_hantar.png successfully.")
-
         hantar_element.click(force=True)
-        print("Clicked 'Hantar' successfully.")
-
         page.wait_for_load_state("domcontentloaded")
-        
-        # Take screenshot after Hantar click
         page.screenshot(path="after_hantar.png")
         resize_screenshot_to_limit("after_hantar.png", 600)
-        print("Saved after_hantar.png successfully.")
-
+        print("Clicked 'Hantar' successfully.")
     except Exception as e:
         print(f"Error clicking 'Hantar': {e}")
-        page.screenshot(path="after_hantar.png")
-        resize_screenshot_to_limit("after_hantar.png", 600)
 
-def process_bahagian_sections(page):
-    """Iterates through Bahagian A to Bahagian G, adding buffer, text fill/document uploads, and screenshots."""
+def fill_field(page, selectors, value):
+    """Helper function to fill text inputs safely."""
+    if not value:
+        return
+    for selector in selectors:
+        try:
+            loc = page.locator(selector).first
+            if loc.count() > 0 and loc.is_visible():
+                loc.fill(value)
+                print(f"Filled '{value}' into selector '{selector}'")
+                return
+        except Exception:
+            continue
+
+def select_option(page, selectors, value):
+    """Helper function to select dropdown options safely."""
+    if not value:
+        return
+    for selector in selectors:
+        try:
+            loc = page.locator(selector).first
+            if loc.count() > 0 and loc.is_visible():
+                loc.select_option(label=value)
+                print(f"Selected option '{value}' in '{selector}'")
+                return
+        except Exception:
+            continue
+
+def process_bahagian_sections(page, app_data):
+    """Fills the OAS portal fields dynamically from Bahagian A to Bahagian G using data fetched from Google Sheets."""
     sections = ['Bahagian A', 'Bahagian B', 'Bahagian C', 'Bahagian D', 'Bahagian E', 'Bahagian F', 'Bahagian G']
     
     for section in sections:
-        print(f"Processing {section}...")
+        print(f"Processing {section} and filling data...")
         try:
-            # Click the tab for the current Bahagian
             tab_element = page.locator(f"a:has-text('{section}'), button:has-text('{section}'), td:has-text('{section}')").first
             if tab_element.count() > 0 and tab_element.is_visible():
                 tab_element.click(force=True)
-                print(f"Clicked tab for {section}.")
-            else:
-                print(f"Tab for {section} not directly clickable by text, trying generic locator...")
-            
             page.wait_for_load_state("domcontentloaded")
+            time.sleep(2)
             
-            # --- BUFFER TIME & PLACEHOLDER: ADD FUNCTION ADD TEXT AND DOCUMENT UPLOAD ---
-            print(f"Buffer active for {section}: waiting for manual/automated information filling...")
-            time.sleep(3) # Buffer time for section load and user information input preparation
-            
-            # TODO: add function add text and document upload
-            # Example text fill / document upload placeholder logic:
-            # page.fill("input[name='example']", "sample text")
-            # page.set_input_files("input[type='file']", "path/to/document.pdf")
-            
-            # Take screenshot for the current Bahagian
+            # --- Auto-fill logic per Bahagian ---
+            if section == 'Bahagian A':
+                fill_field(page, ["input[name*='nama_projek']", "input[name*='project']", "input[placeholder*='Project']"], app_data.get("Project Name"))
+
+            elif section == 'Bahagian B':
+                fill_field(page, ["input[name*='jumlah_keupayaan']", "input[name*='capacity']"], app_data.get("Rated Input Power (kW AC)"))
+                fill_field(page, ["input[name*='kehendak_max']", "input[name*='max_demand']"], app_data.get("Max. Charging Power"))
+
+            elif section == 'Bahagian C':
+                print("Checking Bahagian C checklist requirements...")
+
+            elif section == 'Bahagian E':
+                fill_field(page, ["input[name*='lot']", "input[id*='lot']"], app_data.get("No. Lot / No. Unit / Blok / PT"))
+                fill_field(page, ["input[name*='poskod']"], app_data.get("Poskod"))
+                fill_field(page, ["input[name*='daerah']"], app_data.get("Daerah"))
+                fill_field(page, ["input[name*='mukim']"], app_data.get("Mukim"))
+                fill_field(page, ["input[name*='kawasan']"], app_data.get("Kawasan"))
+                fill_field(page, ["input[name*='taman']"], app_data.get("Taman / Tempat"))
+                fill_field(page, ["input[name*='jalan']"], app_data.get("Jalan"))
+                select_option(page, ["select[name*='negeri']"], app_data.get("Negeri"))
+
+            elif section == 'Bahagian F':
+                # Accept declaration checkboxes
+                checkboxes = page.locator("input[type='checkbox']")
+                for idx in range(checkboxes.count()):
+                    try:
+                        checkboxes.nth(idx).check(force=True)
+                    except Exception:
+                        pass
+
+            elif section == 'Bahagian G':
+                time.sleep(2)
+                try:
+                    simpan_draf_btn = page.locator("input[value*='Simpan Draf'], button:has-text('Simpan Draf')").first
+                    simpan_draf_btn.wait_for(state="visible", timeout=10000)
+                    simpan_draf_btn.click(force=True)
+                    page.wait_for_load_state("domcontentloaded")
+                    print("Saved Bahagian G Simpan Draf successfully.")
+                except Exception as ex_draft:
+                    print(f"Simpan Draf action note: {ex_draft}")
+
             safe_name = section.replace(" ", "_").lower()
             screenshot_filename = f"{safe_name}.png"
             page.screenshot(path=screenshot_filename)
             resize_screenshot_to_limit(screenshot_filename, 600)
             print(f"Saved {screenshot_filename} successfully.")
 
-            # Special check for Bahagian G to search and click "Simpan Draf" with adjusted delay buffer
-            if section == 'Bahagian G':
-                print("Adjusted delay buffer before searching for 'Simpan Draf' in Bahagian G...")
-                time.sleep(4)  # Adjusted delay buffer before clicking Simpan Draf
-                try:
-                    simpan_draf_btn = page.locator("input[value*='Simpan Draf'], button:has-text('Simpan Draf'), input[type='button'][value*='Simpan Draf'], a:has-text('Simpan Draf')").first
-                    simpan_draf_btn.wait_for(state="visible", timeout=10000)
-                    simpan_draf_btn.click(force=True)
-                    print("Clicked 'Simpan Draf' successfully in Bahagian G.")
-                    
-                    page.wait_for_load_state("domcontentloaded")
-                    time.sleep(3) # Buffer after saving draft
-                    
-                    page.screenshot(path="bahagian_g_simpan_draf.png")
-                    resize_screenshot_to_limit("bahagian_g_simpan_draf.png", 600)
-                    print("Saved bahagian_g_simpan_draf.png successfully.")
-                except Exception as ex_draft:
-                    print(f"Could not find or click 'Simpan Draf': {ex_draft}")
-                    page.screenshot(path="bahagian_g_simpan_draf.png")
-                    resize_screenshot_to_limit("bahagian_g_simpan_draf.png", 600)
-
         except Exception as e:
             print(f"Error processing {section}: {e}")
-            safe_name = section.replace(" ", "_").lower()
-            page.screenshot(path=f"{safe_name}.png")
-            resize_screenshot_to_limit(f"{safe_name}.png", 600)
 
 def upload_files(page):
-    """Add your file upload automation logic here after navigating to e-Application."""
     print("Ready to upload files...")
-    # Example:
-    # page.goto("https://oas.st.gov.my/en/your-upload-page-url")
-    # page.set_input_files("input[type='file']", "path/to/your/file.pdf")
-    # page.click("button:has-text('Upload')")
-    # page.wait_for_timeout(5000)
 
 def login_oas():
     email = os.environ.get("OAS_EMAIL")
@@ -225,6 +263,9 @@ def login_oas():
 
     if not email or not password:
         raise ValueError("OAS_EMAIL and OAS_PASSWORD environment variables must be set.")
+
+    # Fetch latest Streamlit form submission from Google Sheets
+    app_data = fetch_latest_submission_from_sheets()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -234,93 +275,53 @@ def login_oas():
         print("Navigating to OAS login page...")
         page.goto("https://oas.st.gov.my/en/home", timeout=60000)
 
-        # 1. Quick check for the popup notification element without a long static sleep
         try:
-            print("Checking and removing popup notification element via JavaScript...")
             xpath_popup = "/html/body/div[2]/div"
             page.evaluate(f"""
                 const element = document.evaluate("{xpath_popup}", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                if (element) {{
-                    element.remove();
-                    console.log("Popup element successfully removed.");
-                }}
+                if (element) {{ element.remove(); }}
             """)
         except Exception as e:
-            print(f"Error removing popup element: {e}")
+            print(f"Popup removal note: {e}")
 
-        # 2. Fill credentials immediately
         print("Filling Email Address and Password...")
         page.get_by_text("Email Address", exact=False).locator("..").locator("input").fill(email)
         page.get_by_text("Password", exact=True).locator("..").locator("input").fill(password)
         
-        # 3. Locate and screenshot the CAPTCHA image
         captcha_code = ""
         try:
-            print("Capturing CAPTCHA image...")
-            captcha_img = page.locator("form img, fieldset img, img[src*='captcha'], img[src*='Captcha'], img[src*='servlet']").first
-            
+            captcha_img = page.locator("form img, fieldset img, img[src*='captcha'], img[src*='Captcha']").first
             if captcha_img.count() > 0 and captcha_img.is_visible():
                 captcha_img.screenshot(path="captcha.png")
-                resize_screenshot_to_limit("captcha.png", 600)
-                print("Saved captcha.png successfully from element.")
             else:
-                print("Element locator failed. Saving full page snapshot as captcha.png fallback...")
                 page.screenshot(path="captcha.png")
-                resize_screenshot_to_limit("captcha.png", 600)
+            resize_screenshot_to_limit("captcha.png", 600)
 
             if os.path.exists("captcha.png"):
                 captcha_code = ask_ollama_to_solve_captcha("captcha.png")
-            else:
-                print("Error: captcha.png could not be written to disk.")
-
         except Exception as e:
-            print(f"Error handling CAPTCHA screenshot: {e}")
-            page.screenshot(path="captcha.png")
-            resize_screenshot_to_limit("captcha.png", 600)
+            print(f"CAPTCHA error: {e}")
 
-        # 4. Paste the number into the verification box
         if captcha_code:
-            print(f"Pasting CAPTCHA text into verification box: {captcha_code}")
-            verification_input = page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification'], tr:has-text('Text Verification') input")
+            verification_input = page.locator("input[name*='captcha'], input[id*='captcha'], input[placeholder*='Verification']")
             verification_input.fill(captcha_code)
-        else:
-            print("Warning: Ollama could not extract a code.")
 
-        # 5. Click Sign In
         print("Clicking Sign In...")
         submit_button = page.locator("input[type='submit'], button[type='submit']")
         submit_button.click(force=True)
-        
-        # Fast load state trigger instead of static sleeping
         page.wait_for_load_state("domcontentloaded")
 
-        current_url = page.url
-        print(f"Current page URL after submission: {current_url}")
-
-        # Take screenshot for login verification
         page.screenshot(path="success_login.png")
         resize_screenshot_to_limit("success_login.png", 600)
-        print("success login...")
 
         logged_in_indicator = page.locator("a:has-text('Logout'), a:has-text('Log Keluar'), .user-avatar, .dashboard")
-        if logged_in_indicator.count() > 0 or "home" not in current_url:
-            print("VERIFICATION SUCCESSFUL: Login was completed successfully!")
-            
-            # --- NAVIGATE TO E-APPLICATION AND TAKE SCREENSHOT ---
+        if logged_in_indicator.count() > 0 or "home" not in page.url:
+            print("VERIFICATION SUCCESSFUL: Login completed!")
             navigate_to_e_application(page)
-
-            # --- NAVIGATE TO EVCS APPLICATION AND TAKE SCREENSHOT ---
             navigate_to_evcs_application(page)
-
-            # --- SEARCH AFTER HANTAR, TAKE SCREENSHOTS, AND CLICK IT ---
             search_after_hantar(page)
-
-            # --- PROCESS BAHAGIAN A TO G (WITH BUFFERS, TEXT/UPLOAD REMARK, AND SIMPAN DRAF) ---
-            process_bahagian_sections(page)
-
-            # --- CALL UPLOAD FUNCTION HERE INSTEAD OF CLOSING ---
+            process_bahagian_sections(page, app_data)
             upload_files(page)
-            
         else:
             print("VERIFICATION WARNING: Could not explicitly confirm login element.")
 
