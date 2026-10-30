@@ -1576,9 +1576,9 @@ if nav_selection == "ST Application":
                         # ==========================================
                         import requests
                         try:
-                            github_token = st.secrets.get("GITHUB_TOKEN", "")
-                            repo_owner = st.secrets.get("GITHUB_REPO_OWNER", "")
-                            repo_name = st.secrets.get("GITHUB_REPO_NAME", "")
+                            github_token = st.secrets.get("GTHUB_TOKEN", "")
+                            repo_owner = st.secrets.get("GTHUB_REPO_OWNER", "")
+                            repo_name = st.secrets.get("GTHUB_REPO_NAME", "")
                             
                             if github_token and repo_owner and repo_name:
                                 url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/dispatches"
