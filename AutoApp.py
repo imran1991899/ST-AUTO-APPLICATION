@@ -767,7 +767,7 @@ if nav_selection == "ST Application":
                 ic1, ic2, ic3 = st.columns([1.8, 2, 1])
                 with ic2:
                     if os.path.exists("imgEVC/add.png"):
-                        st.image("add.png", width=90)
+                        st.image("imgEVC/add.png", width=90)
                     else:
                         st.warning("add.png not found")
                 if st.button("+ add more type", use_container_width=True, key="btn_add_more_type"):
