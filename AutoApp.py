@@ -1700,7 +1700,62 @@ if nav_selection == "ST Application":
 # --------- 2. BUSINESS LICENSE PBT ---------
 elif nav_selection == "Business License PBT":
     st.title("Business License PBT")
-    st.info("This section is reserved for Business License PBT management and review tools.")
+    st.markdown("---")
+    
+    try:
+        gsheet_id = find_or_create_gsheet("general_applications", FOLDER_ID)
+        rows = get_all_gsheet_rows(gsheet_id)
+        
+        if not rows or len(rows) <= 1:
+            st.info("No saved applications found to populate the Business License PBT list.")
+        else:
+            data_rows = rows[1:]
+            
+            # Table Header
+            col_h1, col_h2, col_h3, col_h4 = st.columns([2.5, 1.5, 2.0, 1.5])
+            with col_h1:
+                st.markdown("**project name**")
+            with col_h2:
+                st.markdown("**PBT Name**")
+            with col_h3:
+                st.markdown("**status**")
+            with col_h4:
+                st.markdown("**button**")
+            
+            st.markdown("---")
+            
+            for idx, r in enumerate(data_rows):
+                row_num = idx + 2
+                proj_name = r[1] if len(r) > 1 and r[1] else f"Project (Row {row_num})"
+                pbt_name = r[3] if len(r) > 3 and r[3] else "-"
+                
+                col_r1, col_r2, col_r3, col_r4 = st.columns([2.5, 1.5, 2.0, 1.5])
+                with col_r1:
+                    st.write(proj_name)
+                with col_r2:
+                    st.write(pbt_name)
+                with col_r3:
+                    # Default status or interactive status picker
+                    status_key = f"pbt_status_{row_num}"
+                    if status_key not in st.session_state:
+                        st.session_state[status_key] = "ready to submit"
+                    
+                    status_val = st.selectbox(
+                        "Status",
+                        ["ready to submit", "pending document"],
+                        key=status_key,
+                        label_visibility="collapsed"
+                    )
+                with col_r4:
+                    if status_val == "ready to submit":
+                        if st.button("submit", key=f"btn_submit_pbt_{row_num}", use_container_width=True):
+                            st.success(f"Submitted {proj_name} to {pbt_name}!")
+                    else:
+                        st.markdown("-", unsafe_allow_html=True)
+                
+                st.markdown("---")
+    except Exception as e:
+        st.error(f"Could not load Business License PBT records: {e}")
 
 # --------- 3. TNB Application ---------
 elif nav_selection == "TNB Application":
