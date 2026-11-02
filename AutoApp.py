@@ -629,7 +629,7 @@ st.sidebar.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10p
 
 nav_selection = st.sidebar.radio(
     "Go to",
-    ["ST Application", "Business License PBT", "Information"],
+    ["ST Application", "Business License PBT", "TNB Application", "Information"],
     label_visibility="collapsed"
 )
 
@@ -1701,6 +1701,11 @@ if nav_selection == "ST Application":
 elif nav_selection == "Business License PBT":
     st.title("Business License PBT")
     st.info("This section is reserved for Business License PBT management and review tools.")
+
+# --------- 3. TNB Application ---------
+elif nav_selection == "TNB Application":
+    st.title("TNB Application")
+    st.info("This section provides guidelines, instructions, and system information.")
 
 # --------- 3. INFORMATION ---------
 elif nav_selection == "Information":
