@@ -557,7 +557,7 @@ def generate_project_summary_pdf(evcs_models):
         elif "240" in brand and os.path.exists("imgEVC/DC_240.png"):
             picture_element = RLImage("imgEVC/DC_240.png", width=180, height=330)
             break
-    if not picture_element and os.path.exists("DC_120.png"):
+    if not picture_element and os.path.exists("imgEVC/DC_120.png"):
         picture_element = RLImage("imgEVC/DC_120.png", width=180, height=330)
 
     if picture_element:
@@ -766,7 +766,7 @@ if nav_selection == "ST Application":
             with st.container(border=True):
                 ic1, ic2, ic3 = st.columns([1.8, 2, 1])
                 with ic2:
-                    if os.path.exists("add.png"):
+                    if os.path.exists("imgEVC/add.png"):
                         st.image("add.png", width=90)
                     else:
                         st.warning("add.png not found")
