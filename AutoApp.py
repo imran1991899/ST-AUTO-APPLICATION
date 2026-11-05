@@ -1709,9 +1709,10 @@ elif nav_selection == "Business License PBT":
         if not rows or len(rows) <= 1:
             st.info("No saved applications found to populate the Business License PBT list.")
         else:
+            header = rows[0]
             data_rows = rows[1:]
             
-            # Table Header
+            # Table Header matching Image No. 3 layout
             col_h1, col_h2, col_h3, col_h4 = st.columns([2.5, 1.5, 2.0, 1.5])
             with col_h1:
                 st.markdown("**project name**")
@@ -1735,14 +1736,13 @@ elif nav_selection == "Business License PBT":
                 with col_r2:
                     st.write(pbt_name)
                 with col_r3:
-                    # Default status or interactive status picker
                     status_key = f"pbt_status_{row_num}"
                     if status_key not in st.session_state:
                         st.session_state[status_key] = "ready to submit"
                     
                     status_val = st.selectbox(
                         "Status",
-                        ["ready to submit", "pending document"],
+                        ["ready to submit", "pending document", "Not Ready yet"],
                         key=status_key,
                         label_visibility="collapsed"
                     )
@@ -1750,8 +1750,61 @@ elif nav_selection == "Business License PBT":
                     if status_val == "ready to submit":
                         if st.button("submit", key=f"btn_submit_pbt_{row_num}", use_container_width=True):
                             st.success(f"Submitted {proj_name} to {pbt_name}!")
+                    elif status_val == "Not Ready yet":
+                        if st.button("Hold", key=f"btn_hold_pbt_{row_num}", use_container_width=True):
+                            st.info(f"Application {proj_name} is on hold.")
                     else:
                         st.markdown("-", unsafe_allow_html=True)
+                
+                # Expandable checklist section following Image No. 3 specifications
+                with st.expander(f"📋 PBT Checklist & Documents: {proj_name}", expanded=False):
+                    st.markdown(f"**Project Status / Details:** Draft | Created at: {r[0] if len(r) > 0 else 'N/A'} | PBT: {pbt_name}")
+                    st.markdown("---")
+                    
+                    # Determine project folder id for uploads
+                    proj_folder_id = get_or_create_project_folder(proj_name, FOLDER_ID)
+                    
+                    checklist_items = [
+                        ("SSM", "ssm_file"),
+                        ("KM Letter", "km_file"),
+                        ("Bomba", "bomba_file"),
+                        ("BP", "bp_file"),
+                        ("Site Picture", "site_pic_file")
+                    ]
+                    
+                    all_checked = True
+                    for item_label, item_key_base in checklist_items:
+                        session_chk_key = f"chk_{row_num}_{item_key_base}"
+                        session_file_key = f"file_{row_num}_{item_key_base}"
+                        
+                        if session_chk_key not in st.session_state:
+                            st.session_state[session_chk_key] = False
+                            
+                        c_chk, c_lbl, c_up = st.columns([0.5, 2.5, 4.0])
+                        with c_chk:
+                            is_checked = st.checkbox("Check", key=session_chk_key, label_visibility="collapsed")
+                        with c_lbl:
+                            if is_checked:
+                                st.markdown(f"✅ **{item_label}**")
+                            else:
+                                st.markdown(f"❌ **{item_label}**")
+                                all_checked = False
+                        with c_up:
+                            uploaded_item_file = st.file_uploader(f"Upload {item_label}", type=["pdf", "png", "jpg", "jpeg", "docx"], key=session_file_key)
+                            if uploaded_item_file:
+                                try:
+                                    file_bytes = uploaded_item_file.getvalue() if hasattr(uploaded_item_file, "getvalue") else uploaded_item_file.read()
+                                    orig_filename = getattr(uploaded_item_file, "name", f"{item_key_base}.jpg")
+                                    saved_link, _ = gdrive_upload_file(file_bytes, f"PBT_{item_label}_{orig_filename}", "application/octet-stream", proj_folder_id)
+                                    st.success(f"Uploaded & saved to Google Drive!")
+                                except Exception as e:
+                                    st.error(f"Upload failed: {e}")
+                    
+                    st.markdown("---")
+                    if all_checked:
+                        st.success("All checklist items comply! Status ready to submit.")
+                    else:
+                        st.warning("Not all items comply yet. Please upload missing documents and check boxes.")
                 
                 st.markdown("---")
     except Exception as e:
@@ -1762,7 +1815,7 @@ elif nav_selection == "TNB Application":
     st.title("TNB Application")
     st.info("This section provides guidelines, instructions, and system information.")
 
-# --------- 3. INFORMATION ---------
+# --------- 4. INFORMATION ---------
 elif nav_selection == "Information":
     st.title("Information")
     st.info("This section provides guidelines, instructions, and system information.")
