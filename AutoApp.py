@@ -629,7 +629,7 @@ st.sidebar.markdown("<p style='color: gray; font-size: 0.85rem; margin-top: -10p
 
 nav_selection = st.sidebar.radio(
     "Go to",
-    ["ST Application", "Business License PBT", "TNB Application", "Information"],
+    ["ST Application", "Business License PBT", "TNB Application", "Plugshare Info", "Information"],
     label_visibility="collapsed"
 )
 
@@ -1815,7 +1815,12 @@ elif nav_selection == "TNB Application":
     st.title("TNB Application")
     st.info("This section provides guidelines, instructions, and system information.")
 
-# --------- 4. INFORMATION ---------
+# --------- 4. Plugshare Info ---------
+elif nav_selection == "Plugshare Info":
+    st.title("Plugshare Info")
+    st.info("This section provides guidelines, instructions, and system information.")
+
+# --------- 5. INFORMATION ---------
 elif nav_selection == "Information":
     st.title("Information")
     st.info("This section provides guidelines, instructions, and system information.")
