@@ -2,6 +2,8 @@ name: OAS Ollama Auto Login
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-oas-login]
   schedule:
     - cron: '0 0 * * *'
 
@@ -17,7 +19,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip' # Caches pip dependencies automatically
+          cache: 'pip'
 
       - name: Cache Ollama Binary and Models
         uses: actions/cache@v4
@@ -37,16 +39,11 @@ jobs:
 
       - name: Start Ollama Service and Pull Model
         run: |
-          # Start ollama in background
           ollama serve &
           echo "Waiting for Ollama service to start..."
-          
-          # Quick loop check instead of fixed sleep
           until curl -s http://localhost:11434/api/tags > /dev/null; do
             sleep 1
           done
-          
-          # Pulls model if missing, or skips instantly if cached locally
           ollama pull moondream
 
       - name: Install Python dependencies
@@ -59,6 +56,7 @@ jobs:
         env:
           OAS_EMAIL: ${{ secrets.OAS_EMAIL }}
           OAS_PASSWORD: ${{ secrets.OAS_PASSWORD }}
+          TRIGGER_PROJECT_NAME: ${{ github.event.client_payload.project_name }}
         run: |
           python login.py
 
